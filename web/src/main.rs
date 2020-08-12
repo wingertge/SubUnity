@@ -7,16 +7,28 @@ use api_types::user::user_client::UserClient;
 use rocket::State;
 use tonic::Request;
 use api_types::user::SayRequest;
+use crate::templates::index_html;
+use rocket::response::content::Html;
+
+mod templates;
 
 type UserAPI<'a> = State<'a, UserClient<Channel>>;
 
+fn write_html<F: FnOnce(&mut Vec<u8>)>(f: F) -> Html<String> {
+    let mut buf = Vec::new();
+    f(&mut buf);
+    Html(String::from_utf8(buf).unwrap())
+}
+
 #[get("/")]
-async fn index(api: UserAPI<'_>) -> String {
+async fn index(api: UserAPI<'_>) -> Html<String> {
     let request = Request::new(SayRequest {
         name: "Lisa".to_string()
     });
     let response = api.clone().send(request).await.unwrap().into_inner();
-    response.message
+    write_html(|out| {
+        index_html(out, &response.message, &[]).unwrap()
+    })
 }
 
 #[tokio::main]
