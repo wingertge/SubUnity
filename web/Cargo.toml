@@ -1,0 +1,13 @@
+[package]
+name = "web"
+version = "0.1.0"
+authors = ["Genna Wingert <wingertge@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rocket = { git = "https://github.com/SergioBenitez/Rocket.git" }
+tokio = { version = "0.2", features = ["macros"] }
+api-types = { path = "../api/types" }
+tonic = { version = "0.3", features = ["tls"] }
