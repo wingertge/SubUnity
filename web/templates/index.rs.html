@@ -1,0 +1,17 @@
+@(name: &str, items: &[&str])
+
+<html lang="en">
+    <head><title>@name</title></head>
+        <body>
+            @if items.is_empty() {
+                <p>There are no items.</p>
+            } else {
+                <p>There are @items.len() items.</p>
+                <ul>
+                    @for item in items {
+                        <li>@item</li>
+                    }
+                </ul>
+            }
+        </body>
+</html>
