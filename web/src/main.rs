@@ -86,7 +86,11 @@ async fn request_token(auth: Auth<'_>, code: String) -> Result<Option<Token>, op
         return Ok(None)
     }
 
-    Ok(Some(token))
+#[get("/static/<path..>")]
+fn asset(path: PathBuf) -> Result<&'static [u8], NotFound<()>> {
+    StaticFile::get(path.to_str().unwrap())
+        .map(|file| file.content)
+        .ok_or_else(|| NotFound(()))
 }
 
 #[get("/login")]

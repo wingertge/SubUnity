@@ -3,6 +3,7 @@ use std::io::{self, Write};
 #[cfg_attr(feature="cargo-clippy", allow(useless_attribute))]
 #[allow(unused)]
 use super::{Html,ToHtml};
+use super::statics::test_png;
 
 pub fn index_html<W>(mut _ructe_out_: &mut W, name: &str, items: &[&str]) -> io::Result<()> where W: ?Sized, for<'a> &'a mut W: Write {
 _ructe_out_.write_all(b"<html lang=\"en\">\r\n    <head><title>")?;
@@ -21,6 +22,8 @@ _ructe_out_.write_all(b"</li>\r\n                    ")?;
 }
 _ructe_out_.write_all(b"</ul>\r\n            ")?;
 }
-_ructe_out_.write_all(b"\r\n        </body>\r\n</html>")?;
+_ructe_out_.write_all(b"\r\n            <img alt=\"Test\" src=\"/static/")?;
+test_png.name.to_html(&mut _ructe_out_)?;
+_ructe_out_.write_all(b"\" />\r\n        </body>\r\n</html>")?;
 Ok(())
 }

@@ -1,3 +1,5 @@
+@use super::statics::test_png;
+
 @(name: &str, items: &[&str])
 
 <html lang="en">
@@ -13,5 +15,6 @@
                     }
                 </ul>
             }
+            <img alt="Test" src="/static/@test_png.name" />
         </body>
 </html>
