@@ -6,43 +6,29 @@ extern crate async_trait;
 use tonic::transport::Channel;
 use std::error::Error;
 use api_types::user::user_client::UserClient;
-use rocket::{State, Request};
+use rocket::State;
 use api_types::user::SayRequest;
 use crate::templates::index_html;
 use rocket::response::content::Html;
 use crate::settings::{Settings, Authentication};
 use config::Config;
-use openid::{DiscoveredClient, Options, Token, Bearer};
-use rocket::response::Redirect;
+use openid::{DiscoveredClient};
 use failure::Fail;
-use rocket::response::status::Unauthorized;
-use rocket::http::{Cookies, Cookie};
-use rocket::request::{FromRequest, Outcome};
-use rocket::outcome::IntoOutcome;
+use rocket::response::status::NotFound;
+use crate::templates::statics::StaticFile;
+use rocket_contrib::helmet::SpaceHelmet;
+use std::path::PathBuf;
+use crate::authentication::AuthenticatedApiConn;
 
 mod templates;
 mod settings;
+mod authentication;
+mod profile;
 
 type Template = Html<Vec<u8>>;
-type UserAPI<'a> = State<'a, UserClient<Channel>>;
+pub type API<'a> = State<'a, ApiConn>;
+pub type AuthAPI<'a> = AuthenticatedApiConn<'a>;
 type Auth<'a> = State<'a, DiscoveredClient>;
-
-pub struct User {
-    token: Token
-}
-
-#[async_trait]
-impl<'a, 'r> FromRequest<'a, 'r> for User {
-    type Error = Redirect;
-
-    async fn from_request(request: &'a Request<'r>) -> Outcome<Self, Self::Error> {
-        request.cookies()
-            .get_private("__auth__")
-            .and_then(|cookie| serde_json::from_str::<Bearer>(cookie.value()).ok())
-            .map(|bearer| User { token: bearer.into() })
-            .or_forward(())
-    }
-}
 
 fn write_html<F: FnOnce(&mut Vec<u8>)>(f: F) -> Template {
     let mut buf = Vec::new();
@@ -51,40 +37,22 @@ fn write_html<F: FnOnce(&mut Vec<u8>)>(f: F) -> Template {
 }
 
 #[get("/")]
-async fn index(api: UserAPI<'_>) -> Template {
+async fn index(api: AuthAPI<'_>) -> Template {
     let request = tonic::Request::new(SayRequest {
         name: "Lisa".to_string()
     });
-    let response = api.clone().send(request).await.unwrap().into_inner();
+    let response = api.user().send(request).await.unwrap().into_inner();
     write_html(|out| {
         index_html(out, &response.message, &["test item"]).unwrap()
     })
 }
 
-#[get("/login/oauth2/code/oidc?<code>")]
-async fn login(auth: Auth<'_>, code: String, mut cookies: Cookies<'_>) -> Result<Redirect, Unauthorized<String>> {
-    match request_token(auth, code).await {
-        Ok(None) => Err(Unauthorized(None)),
-        Err(err) => Err(Unauthorized(Some(format!("{:?}", err)))),
-        Ok(Some(token)) => {
-            cookies.add_private(Cookie::new(
-                "__auth__",
-                serde_json::to_string(&token.bearer).unwrap()
-            ));
-            Ok(Redirect::found(uri!(index)))
-        }
-    }
+#[get("/", rank = 2)]
+async fn index2() -> Template {
+    write_html(|out| {
+        index_html(out, "Lisa", &["test item"]).unwrap()
+    })
 }
-
-async fn request_token(auth: Auth<'_>, code: String) -> Result<Option<Token>, openid::error::Error> {
-    let mut token: Token = auth.request_token(&code).await?.into();
-    if let Some(mut id_token) = token.id_token.as_mut() {
-        auth.decode_token(&mut id_token)?;
-        auth.validate_token(&id_token, None, None)?;
-        eprintln!("token: {:#?}", id_token);
-    } else {
-        return Ok(None)
-    }
 
 #[get("/static/<path..>")]
 fn asset(path: PathBuf) -> Result<&'static [u8], NotFound<()>> {
@@ -93,26 +61,12 @@ fn asset(path: PathBuf) -> Result<&'static [u8], NotFound<()>> {
         .ok_or_else(|| NotFound(()))
 }
 
-#[get("/login")]
-async fn authorize(auth: Auth<'_>, settings: State<'_, Settings>) -> Redirect {
-    let auth_url = auth.auth_url(&Options {
-        scope: Some(format!("email offline_access {}/User", settings.authentication.api_url)),
-        ..Default::default()
-    });
+pub struct ApiConn(pub Channel);
 
-    eprintln!("authorize: {}", auth_url);
-
-    Redirect::found(auth_url.to_string())
-}
-
-#[get("/profile")]
-async fn profile(user: User) -> &'static str {
-    "you're logged in!"
-}
-
-#[get("/profile", rank = 2)]
-async fn profile_unauthorized() -> Redirect {
-    Redirect::to(uri!(authorize))
+impl ApiConn {
+    pub fn user(&self) -> UserClient<Channel> {
+        UserClient::new(self.0.clone())
+    }
 }
 
 #[tokio::main]
@@ -142,18 +96,24 @@ async fn main() -> Result<(), Box<dyn Error>> {
         )
     }.await.map_err(Fail::compat)?;
 
-    let user = {
-        let channel = Channel::from_static("http://[::1]:50051")
-            .connect()
-            .await?;
-        UserClient::new(channel)
-    };
+    let channel = Channel::from_static("http://[::1]:50051")
+        .connect()
+        .await?;
 
     rocket::ignite()
-        .mount("/", routes![index, login, authorize, profile, profile_unauthorized])
+        .attach(SpaceHelmet::default())
         .manage(auth)
-        .manage(user)
+        .manage(ApiConn(channel))
         .manage(settings)
+        .mount("/", routes![
+            index,
+            index2,
+            asset,
+            authentication::login,
+            authentication::authorize,
+            profile::profile,
+            profile::profile_unauthorized
+        ])
         .launch().await?;
 
     Ok(())

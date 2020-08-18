@@ -12,7 +12,7 @@ tokio = { version = "0.2", features = ["macros"] }
 api-types = { path = "../api/types" }
 tonic = { version = "0.3", features = ["tls"] }
 config = "0.10"
-openid = { git = "https://github.com/wingertge/openid.git" }
+openid = "0.4"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 failure = "0.1"
@@ -20,3 +20,9 @@ async-trait = "0.1"
 
 [build-dependencies]
 ructe = "0.11"
+
+[dependencies.rocket_contrib]
+git = "https://github.com/SergioBenitez/Rocket.git"
+# rev = "45b4436ed3a7ab913d96c2b69ee4df7fd8c0c618"
+default-features = false
+features = ["helmet"]
