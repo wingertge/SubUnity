@@ -16,53 +16,74 @@ use serde::{Serialize, Deserialize};
 use config::Config;
 use tonic::metadata::MetadataValue;
 use crate::db::models::{NewUser, self};
+use diesel::result::Error as DieselError;
 
 mod db;
+
+trait IntoStatus<T> {
+    fn into_status(self) -> Result<T, Status>;
+}
+
+impl<T> IntoStatus<T> for Result<T, DieselError> {
+    fn into_status(self) -> Result<T, Status> {
+        self.map_err(|err| match err {
+            DieselError::NotFound => Status::not_found(""),
+            DieselError::DatabaseError(_, info) => Status::aborted(info.message()),
+            _ => Status::aborted("database error")
+        })
+    }
+}
+
+impl<T> IntoStatus<T> for Result<T, r2d2::Error> {
+    fn into_status(self) -> Result<T, Status> {
+        self.map_err(|err| Status::aborted(format!("{}", err)))
+    }
+}
 
 type Database = Pool<ConnectionManager<SqliteConnection>>;
 
 pub struct UserService { db: Database }
 
-fn init_user(claims: Claims, name: &str, conn: &SqliteConnection) -> models::User {
+fn init_user(claims: Claims, conn: &SqliteConnection) -> QueryResult<models::User> {
     use crate::db::schema::users;
 
     let user = NewUser {
         id: &claims.sub,
-        username: name,
+        username: &claims.name,
         email: claims.emails.first().map(|s| &**s)
     };
 
     let res = diesel::insert_into(users::table)
         .values(&user)
-        .execute(conn)
-        .expect("Error saving user");
+        .execute(conn)?;
     assert_eq!(res, 1);
 
     users::table.find(&claims.sub)
-        .load::<models::User>(conn)
-        .expect("Error loading user")
+        .load::<models::User>(conn)?
         .pop()
-        .unwrap()
+        .ok_or_else(|| diesel::NotFound)
+}
+
+fn get_user<T>(request: &Request<T>, conn: &SqliteConnection) -> Result<models::User, Status> {
+    use crate::db::schema::users::dsl::*;
+    use crate::db::models::User;
+
+    let user = request.metadata().get("user")
+        .ok_or_else(|| Status::unauthenticated("not authenticated"))?
+        .to_str().unwrap();
+    let claims: Claims = serde_json::from_str(user).unwrap();
+    Ok(users.find(&claims.sub)
+        .load::<User>(conn)
+        .into_status()?
+        .pop()
+        .unwrap_or_else(|| init_user(claims, conn).unwrap()))
 }
 
 #[async_trait]
 impl User for UserService {
     async fn send(&self, request: Request<SayRequest>) -> Result<Response<SayResponse>, Status> {
-        use crate::db::schema::users::dsl::*;
-        use crate::db::models::User;
-
-        let user = request.metadata().get("user").unwrap().to_str().unwrap();
-        let claims: Claims = serde_json::from_str(user).unwrap();
-        println!("{:?}", claims);
-
-        let name=  request.into_inner().name;
-
-        let conn = self.db.get().unwrap();
-        let user: User = users.find(&claims.sub)
-            .load::<User>(&conn)
-            .expect("Error loading user")
-            .pop()
-            .unwrap_or_else(|| init_user(claims, &name, &conn));
+        let conn = self.db.get().into_status()?;
+        let user = get_user(&request, &conn)?;
 
         println!("Result: {:?}", user);
         Ok(Response::new(SayResponse {

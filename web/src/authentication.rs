@@ -30,13 +30,15 @@ impl<'a, 'r> FromRequest<'a, 'r> for User {
     type Error = Infallible;
 
     async fn from_request(request: &'a Request<'r>) -> Outcome<Self, Self::Error> {
-        let auth = request.managed_state::<DiscoveredClient>().unwrap();
-        request.cookies()
-            .get_private("__auth__")
-            .and_then(|cookie| serde_json::from_str::<Bearer>(cookie.value()).ok())
-            .and_then(|bearer| refresh_if_expired(request, bearer, auth))
-            .map(|bearer| User { token: bearer.into() })
-            .or_forward(())
+        let auth = request.managed_state::<DiscoveredClient>();
+        if let Some(auth) = auth {
+            request.cookies()
+                .get_private("__auth__")
+                .and_then(|cookie| serde_json::from_str::<Bearer>(cookie.value()).ok())
+                .and_then(|bearer| refresh_if_expired(request, bearer, auth))
+                .map(|bearer| User { token: bearer.into() })
+                .or_forward(())
+        } else { Outcome::Forward(()) }
     }
 }
 
