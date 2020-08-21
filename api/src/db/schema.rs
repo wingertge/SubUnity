@@ -3,5 +3,6 @@ table! {
         id -> Text,
         username -> Text,
         email -> Nullable<Text>,
+        picture -> Nullable<Text>,
     }
 }

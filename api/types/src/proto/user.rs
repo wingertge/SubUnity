@@ -8,6 +8,41 @@ pub struct SayResponse {
     #[prost(string, tag = "1")]
     pub message: std::string::String,
 }
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ImageUploadRequest {
+    #[prost(string, tag = "1")]
+    pub file: std::string::String,
+    #[prost(uint32, tag = "2")]
+    pub width: u32,
+    #[prost(uint32, tag = "3")]
+    pub height: u32,
+    #[prost(uint32, tag = "4")]
+    pub crop_size: u32,
+    #[prost(uint32, tag = "5")]
+    pub offset_x: u32,
+    #[prost(uint32, tag = "6")]
+    pub offset_y: u32,
+    #[prost(bytes, tag = "7")]
+    pub content: std::vec::Vec<u8>,
+}
+/// The `Status` type defines a logical error model that is suitable for
+/// different programming environments, including REST APIs and RPC APIs. It is
+/// used by [gRPC](https://github.com/grpc). Each `Status` message contains
+/// three pieces of data: error code, error message, and error details.
+///
+/// You can find out more about this error model and how to work with it in the
+/// [API Design Guide](https://cloud.google.com/apis/design/errors).
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Status {
+    /// The status code, which should be an enum value of [google.rpc.Code][google.rpc.Code].
+    #[prost(int32, tag = "1")]
+    pub code: i32,
+    /// A developer-facing error message, which should be in English. Any
+    /// user-facing error message should be localized and sent in the
+    /// [google.rpc.Status.details][google.rpc.Status.details] field, or localized by the client.
+    #[prost(string, tag = "2")]
+    pub message: std::string::String,
+}
 #[doc = r" Generated client implementations."]
 pub mod user_client {
     #![allow(unused_variables, dead_code, missing_docs)]
@@ -55,6 +90,20 @@ pub mod user_client {
             let path = http::uri::PathAndQuery::from_static("/user.User/Send");
             self.inner.unary(request.into_request(), path, codec).await
         }
+        pub async fn set_profile_picture(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ImageUploadRequest>,
+        ) -> Result<tonic::Response<super::Status>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/user.User/SetProfilePicture");
+            self.inner.unary(request.into_request(), path, codec).await
+        }
     }
     impl<T: Clone> Clone for UserClient<T> {
         fn clone(&self) -> Self {
@@ -80,6 +129,10 @@ pub mod user_server {
             &self,
             request: tonic::Request<super::SayRequest>,
         ) -> Result<tonic::Response<super::SayResponse>, tonic::Status>;
+        async fn set_profile_picture(
+            &self,
+            request: tonic::Request<super::ImageUploadRequest>,
+        ) -> Result<tonic::Response<super::Status>, tonic::Status>;
     }
     #[derive(Debug)]
     pub struct UserServer<T: User> {
@@ -133,6 +186,37 @@ pub mod user_server {
                         let interceptor = inner.1.clone();
                         let inner = inner.0;
                         let method = SendSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/user.User/SetProfilePicture" => {
+                    #[allow(non_camel_case_types)]
+                    struct SetProfilePictureSvc<T: User>(pub Arc<T>);
+                    impl<T: User> tonic::server::UnaryService<super::ImageUploadRequest> for SetProfilePictureSvc<T> {
+                        type Response = super::Status;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::ImageUploadRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).set_profile_picture(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1.clone();
+                        let inner = inner.0;
+                        let method = SetProfilePictureSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = if let Some(interceptor) = interceptor {
                             tonic::server::Grpc::with_interceptor(codec, interceptor)

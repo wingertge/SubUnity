@@ -1,24 +1,31 @@
-#[macro_use] extern crate async_trait;
-#[macro_use] extern crate diesel;
+#[macro_use]
+extern crate async_trait;
+#[macro_use]
+extern crate diesel;
 
-use tonic::{Response, Status, Request};
-use std::error::Error;
-use tonic::transport::Server;
-use api_types::user::{SayRequest, SayResponse};
-use api_types::user::user_server::{User, UserServer};
-use std::env;
-use diesel::SqliteConnection;
-use diesel::r2d2::{ConnectionManager, Pool};
-use diesel::prelude::*;
-use openid::{Jws, SingleOrMultiple, Userinfo, Client, Discovered, CompactJson};
-use openid::biscuit::Url;
-use serde::{Serialize, Deserialize};
+use api_types::user::user_server::UserServer;
+use azure_sdk_storage_core::client as blob_client;
+use azure_sdk_storage_core::key_client::KeyClient;
 use config::Config;
-use tonic::metadata::MetadataValue;
-use crate::db::models::{NewUser, self};
+use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::result::Error as DieselError;
+use diesel::SqliteConnection;
+use openid::biscuit::Url;
+use openid::{Client, CompactJson, Discovered, Jws, SingleOrMultiple, Userinfo};
+use serde::{Deserialize, Serialize};
+use std::env;
+use std::error::Error;
+use tonic::metadata::MetadataValue;
+use tonic::transport::Server;
+use tonic::{Request, Status};
+use r2d2::PooledConnection;
+use std::sync::Arc;
+use crate::settings::{Settings, Authentication, Storage};
+use crate::user::UserService;
 
 mod db;
+mod settings;
+mod user;
 
 trait IntoStatus<T> {
     fn into_status(self) -> Result<T, Status>;
@@ -29,7 +36,7 @@ impl<T> IntoStatus<T> for Result<T, DieselError> {
         self.map_err(|err| match err {
             DieselError::NotFound => Status::not_found(""),
             DieselError::DatabaseError(_, info) => Status::aborted(info.message()),
-            _ => Status::aborted("database error")
+            _ => Status::aborted("database error"),
         })
     }
 }
@@ -40,74 +47,30 @@ impl<T> IntoStatus<T> for Result<T, r2d2::Error> {
     }
 }
 
-type Database = Pool<ConnectionManager<SqliteConnection>>;
-
-pub struct UserService { db: Database }
-
-fn init_user(claims: Claims, conn: &SqliteConnection) -> QueryResult<models::User> {
-    use crate::db::schema::users;
-
-    let user = NewUser {
-        id: &claims.sub,
-        username: &claims.name,
-        email: claims.emails.first().map(|s| &**s)
-    };
-
-    let res = diesel::insert_into(users::table)
-        .values(&user)
-        .execute(conn)?;
-    assert_eq!(res, 1);
-
-    users::table.find(&claims.sub)
-        .load::<models::User>(conn)?
-        .pop()
-        .ok_or_else(|| diesel::NotFound)
+pub struct State {
+    db: Database,
+    conf: Settings,
 }
 
-fn get_user<T>(request: &Request<T>, conn: &SqliteConnection) -> Result<models::User, Status> {
-    use crate::db::schema::users::dsl::*;
-    use crate::db::models::User;
+impl State {
+    pub fn db(&self) -> Result<DbConnection, Status> {
+        self.db.get().into_status()
+    }
 
-    let user = request.metadata().get("user")
-        .ok_or_else(|| Status::unauthenticated("not authenticated"))?
-        .to_str().unwrap();
-    let claims: Claims = serde_json::from_str(user).unwrap();
-    Ok(users.find(&claims.sub)
-        .load::<User>(conn)
-        .into_status()?
-        .pop()
-        .unwrap_or_else(|| init_user(claims, conn).unwrap()))
-}
-
-#[async_trait]
-impl User for UserService {
-    async fn send(&self, request: Request<SayRequest>) -> Result<Response<SayResponse>, Status> {
-        let conn = self.db.get().into_status()?;
-        let user = get_user(&request, &conn)?;
-
-        println!("Result: {:?}", user);
-        Ok(Response::new(SayResponse {
-            message: format!("hello {}", user.username)
-        }))
+    pub fn blob(&self) -> KeyClient {
+        let Settings {
+            storage: Storage {
+                blob_account,
+                blob_key,
+            },
+            ..
+        } = &self.conf;
+        blob_client::with_access_key(blob_account, blob_key)
     }
 }
 
-#[derive(Default, Deserialize)]
-pub struct Settings {
-    pub authentication: Authentication
-}
-
-#[derive(Default, Deserialize)]
-pub struct Authentication {
-    pub issuer: String,
-    pub client_id: String,
-    pub client_secret: String,
-    pub api_url: String,
-
-    pub signin_policy: String,
-    pub edit_profile_policy: String,
-    pub reset_password_policy: String
-}
+type Database = Pool<ConnectionManager<SqliteConnection>>;
+type DbConnection = PooledConnection<ConnectionManager<SqliteConnection>>;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -122,34 +85,38 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let auth = {
         let Settings {
-            authentication: Authentication {
-                client_id,
-                client_secret,
-                issuer,
-                ..
-            }
+            authentication:
+                Authentication {
+                    client_id,
+                    client_secret,
+                    issuer,
+                    ..
+                },
+            ..
         } = &settings;
 
         Client::discover(
             client_id.to_string(),
             client_secret.to_string(),
             None,
-            issuer.parse()?
+            issuer.parse()?,
         )
-    }.await.unwrap();
+    }
+    .await
+    .unwrap();
 
-    let database_url = env::var("DATABASE_URL")
-        .expect("DATABASE_URL must be set");
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let manager = ConnectionManager::<SqliteConnection>::new(database_url);
     let pool = Pool::builder().build(manager)?;
+    let state = Arc::new(State {
+        db: pool,
+        conf: settings
+    });
 
     let addr = "[::1]:50051".parse().unwrap();
-    let user = UserServer::with_interceptor(UserService { db: pool.clone() }, authorize(auth));
+    let user = UserServer::with_interceptor(UserService(state.clone()), authorize(auth));
     println!("Server listening on {}", addr);
-    Server::builder()
-        .add_service(user)
-        .serve(addr)
-        .await?;
+    Server::builder().add_service(user).serve(addr).await?;
     Ok(())
 }
 
@@ -169,7 +136,7 @@ struct Claims {
     #[serde(default)]
     azp: Option<String>,
     ver: String,
-    iat: i64
+    iat: i64,
 }
 
 const USER_INFO: Userinfo = Userinfo {
@@ -192,7 +159,7 @@ const USER_INFO: Userinfo = Userinfo {
     phone_number: None,
     phone_number_verified: false,
     address: None,
-    updated_at: None
+    updated_at: None,
 };
 
 impl openid::Claims for Claims {
@@ -250,10 +217,13 @@ impl openid::Claims for Claims {
 }
 impl CompactJson for Claims {}
 
-fn authorize(client: Client<Discovered, Claims>) -> impl Fn(Request<()>) -> Result<Request<()>, Status> {
+fn authorize(
+    client: Client<Discovered, Claims>,
+) -> impl Fn(Request<()>) -> Result<Request<()>, Status> {
     move |mut req| {
         if let Some(token) = req.metadata().get("authorization") {
-            let token = token.to_str()
+            let token = token
+                .to_str()
                 .map_err(|_| Status::aborted("bad authorization header"))?
                 .replacen("Bearer ", "", 1);
 
@@ -262,13 +232,15 @@ fn authorize(client: Client<Discovered, Claims>) -> impl Fn(Request<()>) -> Resu
             client.validate_token(&mut token, None, None).unwrap();
             let token = match token {
                 Jws::Decoded { payload, .. } => payload,
-                Jws::Encoded(_) => unreachable!()
+                Jws::Encoded(_) => unreachable!(),
             };
             let json = serde_json::to_string(&token).unwrap();
             let meta = MetadataValue::from_str(&json).unwrap();
             req.metadata_mut().insert("user", meta);
 
             Ok(req)
-        } else { Ok(req) }
+        } else {
+            Ok(req)
+        }
     }
 }

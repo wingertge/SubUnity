@@ -4,6 +4,7 @@ package user;
 
 service User {
   rpc Send(SayRequest) returns (SayResponse);
+  rpc SetProfilePicture(ImageUploadRequest) returns (Status);
 }
 
 message SayRequest {
@@ -12,4 +13,31 @@ message SayRequest {
 
 message SayResponse {
   string message = 1;
+}
+
+message ImageUploadRequest {
+  string file = 1;
+  uint32 width = 2;
+  uint32 height = 3;
+  uint32 cropSize = 4;
+  uint32 offsetX = 5;
+  uint32 offsetY = 6;
+  bytes content = 7;
+}
+
+// The `Status` type defines a logical error model that is suitable for
+// different programming environments, including REST APIs and RPC APIs. It is
+// used by [gRPC](https://github.com/grpc). Each `Status` message contains
+// three pieces of data: error code, error message, and error details.
+//
+// You can find out more about this error model and how to work with it in the
+// [API Design Guide](https://cloud.google.com/apis/design/errors).
+message Status {
+  // The status code, which should be an enum value of [google.rpc.Code][google.rpc.Code].
+  int32 code = 1;
+
+  // A developer-facing error message, which should be in English. Any
+  // user-facing error message should be localized and sent in the
+  // [google.rpc.Status.details][google.rpc.Status.details] field, or localized by the client.
+  string message = 2;
 }
