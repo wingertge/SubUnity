@@ -1,5 +1,5 @@
-use rocket::response::Redirect;
 use crate::authentication::User;
+use rocket::response::Redirect;
 
 #[get("/profile")]
 pub async fn profile(_user: User) -> &'static str {

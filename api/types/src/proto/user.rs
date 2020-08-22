@@ -1,12 +1,12 @@
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SayRequest {
     #[prost(string, tag = "1")]
-    pub name: std::string::String,
+    pub name: std::string::String
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SayResponse {
     #[prost(string, tag = "1")]
-    pub message: std::string::String,
+    pub message: std::string::String
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ImageUploadRequest {
@@ -23,7 +23,7 @@ pub struct ImageUploadRequest {
     #[prost(uint32, tag = "6")]
     pub offset_y: u32,
     #[prost(bytes, tag = "7")]
-    pub content: std::vec::Vec<u8>,
+    pub content: std::vec::Vec<u8>
 }
 /// The `Status` type defines a logical error model that is suitable for
 /// different programming environments, including REST APIs and RPC APIs. It is
@@ -41,21 +41,21 @@ pub struct Status {
     /// user-facing error message should be localized and sent in the
     /// [google.rpc.Status.details][google.rpc.Status.details] field, or localized by the client.
     #[prost(string, tag = "2")]
-    pub message: std::string::String,
+    pub message: std::string::String
 }
 #[doc = r" Generated client implementations."]
 pub mod user_client {
     #![allow(unused_variables, dead_code, missing_docs)]
     use tonic::codegen::*;
     pub struct UserClient<T> {
-        inner: tonic::client::Grpc<T>,
+        inner: tonic::client::Grpc<T>
     }
     impl UserClient<tonic::transport::Channel> {
         #[doc = r" Attempt to create a new client by connecting to a given endpoint."]
         pub async fn connect<D>(dst: D) -> Result<Self, tonic::transport::Error>
         where
             D: std::convert::TryInto<tonic::transport::Endpoint>,
-            D::Error: Into<StdError>,
+            D::Error: Into<StdError>
         {
             let conn = tonic::transport::Endpoint::new(dst)?.connect().await?;
             Ok(Self::new(conn))
@@ -66,7 +66,7 @@ pub mod user_client {
         T: tonic::client::GrpcService<tonic::body::BoxBody>,
         T::ResponseBody: Body + HttpBody + Send + 'static,
         T::Error: Into<StdError>,
-        <T::ResponseBody as HttpBody>::Error: Into<StdError> + Send,
+        <T::ResponseBody as HttpBody>::Error: Into<StdError> + Send
     {
         pub fn new(inner: T) -> Self {
             let inner = tonic::client::Grpc::new(inner);
@@ -78,12 +78,12 @@ pub mod user_client {
         }
         pub async fn send(
             &mut self,
-            request: impl tonic::IntoRequest<super::SayRequest>,
+            request: impl tonic::IntoRequest<super::SayRequest>
         ) -> Result<tonic::Response<super::SayResponse>, tonic::Status> {
             self.inner.ready().await.map_err(|e| {
                 tonic::Status::new(
                     tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
+                    format!("Service was not ready: {}", e.into())
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
@@ -92,12 +92,12 @@ pub mod user_client {
         }
         pub async fn set_profile_picture(
             &mut self,
-            request: impl tonic::IntoRequest<super::ImageUploadRequest>,
+            request: impl tonic::IntoRequest<super::ImageUploadRequest>
         ) -> Result<tonic::Response<super::Status>, tonic::Status> {
             self.inner.ready().await.map_err(|e| {
                 tonic::Status::new(
                     tonic::Code::Unknown,
-                    format!("Service was not ready: {}", e.into()),
+                    format!("Service was not ready: {}", e.into())
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
@@ -108,7 +108,7 @@ pub mod user_client {
     impl<T: Clone> Clone for UserClient<T> {
         fn clone(&self) -> Self {
             Self {
-                inner: self.inner.clone(),
+                inner: self.inner.clone()
             }
         }
     }
@@ -127,16 +127,16 @@ pub mod user_server {
     pub trait User: Send + Sync + 'static {
         async fn send(
             &self,
-            request: tonic::Request<super::SayRequest>,
+            request: tonic::Request<super::SayRequest>
         ) -> Result<tonic::Response<super::SayResponse>, tonic::Status>;
         async fn set_profile_picture(
             &self,
-            request: tonic::Request<super::ImageUploadRequest>,
+            request: tonic::Request<super::ImageUploadRequest>
         ) -> Result<tonic::Response<super::Status>, tonic::Status>;
     }
     #[derive(Debug)]
     pub struct UserServer<T: User> {
-        inner: _Inner<T>,
+        inner: _Inner<T>
     }
     struct _Inner<T>(Arc<T>, Option<tonic::Interceptor>);
     impl<T: User> UserServer<T> {
@@ -155,7 +155,7 @@ pub mod user_server {
     where
         T: User,
         B: HttpBody + Send + Sync + 'static,
-        B::Error: Into<StdError> + Send + 'static,
+        B::Error: Into<StdError> + Send + 'static
     {
         type Response = http::Response<tonic::body::BoxBody>;
         type Error = Never;
@@ -174,7 +174,7 @@ pub mod user_server {
                         type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::SayRequest>,
+                            request: tonic::Request<super::SayRequest>
                         ) -> Self::Future {
                             let inner = self.0.clone();
                             let fut = async move { (*inner).send(request).await };
@@ -205,7 +205,7 @@ pub mod user_server {
                         type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::ImageUploadRequest>,
+                            request: tonic::Request<super::ImageUploadRequest>
                         ) -> Self::Future {
                             let inner = self.0.clone();
                             let fut = async move { (*inner).set_profile_picture(request).await };
@@ -234,7 +234,7 @@ pub mod user_server {
                         .header("grpc-status", "12")
                         .body(tonic::body::BoxBody::empty())
                         .unwrap())
-                }),
+                })
             }
         }
     }

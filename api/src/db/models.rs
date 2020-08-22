@@ -5,7 +5,7 @@ pub struct User {
     pub id: String,
     pub username: String,
     pub email: Option<String>,
-    pub picture: Option<String>,
+    pub picture: Option<String>
 }
 
 #[derive(Insertable)]
@@ -13,5 +13,5 @@ pub struct User {
 pub struct NewUser<'a> {
     pub id: &'a str,
     pub username: &'a str,
-    pub email: Option<&'a str>,
+    pub email: Option<&'a str>
 }

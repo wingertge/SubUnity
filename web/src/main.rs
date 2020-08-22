@@ -3,27 +3,27 @@ extern crate rocket;
 #[macro_use]
 extern crate async_trait;
 
-use tonic::transport::Channel;
-use std::error::Error;
-use api_types::user::user_client::UserClient;
-use rocket::State;
-use api_types::user::SayRequest;
-use crate::templates::index_html;
-use rocket::response::content::Html;
-use crate::settings::{Settings, Authentication};
+use crate::{
+    authentication::AuthenticatedApiConn,
+    settings::{Authentication, Settings},
+    templates::{index_html, statics::StaticFile}
+};
+use api_types::user::{user_client::UserClient, SayRequest};
 use config::Config;
-use openid::{DiscoveredClient};
 use failure::Fail;
-use rocket::response::status::NotFound;
-use crate::templates::statics::StaticFile;
+use openid::DiscoveredClient;
+use rocket::{
+    response::{content::Html, status::NotFound},
+    State
+};
 use rocket_contrib::helmet::SpaceHelmet;
-use std::path::PathBuf;
-use crate::authentication::AuthenticatedApiConn;
+use std::{error::Error, path::PathBuf};
+use tonic::transport::Channel;
 
-mod templates;
-mod settings;
 mod authentication;
 mod profile;
+mod settings;
+mod templates;
 
 type Template = Html<Vec<u8>>;
 pub type API<'a> = State<'a, ApiConn>;
@@ -42,16 +42,12 @@ async fn index(api: AuthAPI<'_>) -> Template {
         name: "Lisa".to_string()
     });
     let response = api.user().send(request).await.unwrap().into_inner();
-    write_html(|out| {
-        index_html(out, &response.message, &["test item"]).unwrap()
-    })
+    write_html(|out| index_html(out, &response.message, &["test item"]).unwrap())
 }
 
 #[get("/", rank = 2)]
 async fn index2() -> Template {
-    write_html(|out| {
-        index_html(out, "Lisa", &["test item"]).unwrap()
-    })
+    write_html(|out| index_html(out, "Lisa", &["test item"]).unwrap())
 }
 
 #[get("/static/<path..>")]
@@ -80,12 +76,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let auth = {
         let Settings {
-            authentication: Authentication {
-                client_id,
-                client_secret,
-                issuer,
-                ..
-            }
+            authentication:
+                Authentication {
+                    client_id,
+                    client_secret,
+                    issuer,
+                    ..
+                }
         } = &settings;
 
         DiscoveredClient::discover(
@@ -94,27 +91,31 @@ async fn main() -> Result<(), Box<dyn Error>> {
             Some("http://localhost:8000/login/oauth2/code/oidc".to_string()),
             issuer.parse()?
         )
-    }.await.map_err(Fail::compat)?;
+    }
+    .await
+    .map_err(Fail::compat)?;
 
-    let channel = Channel::from_static("http://[::1]:50051")
-        .connect()
-        .await?;
+    let channel = Channel::from_static("http://[::1]:50051").connect().await?;
 
     rocket::ignite()
         .attach(SpaceHelmet::default())
         .manage(auth)
         .manage(ApiConn(channel))
         .manage(settings)
-        .mount("/", routes![
-            index,
-            index2,
-            asset,
-            authentication::login,
-            authentication::authorize,
-            profile::profile,
-            profile::profile_unauthorized
-        ])
-        .launch().await?;
+        .mount(
+            "/",
+            routes![
+                index,
+                index2,
+                asset,
+                authentication::login,
+                authentication::authorize,
+                profile::profile,
+                profile::profile_unauthorized
+            ]
+        )
+        .launch()
+        .await?;
 
     Ok(())
 }

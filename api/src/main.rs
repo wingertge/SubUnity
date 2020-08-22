@@ -3,25 +3,23 @@ extern crate async_trait;
 #[macro_use]
 extern crate diesel;
 
+use crate::{
+    settings::{Authentication, Settings, Storage},
+    user::UserService
+};
 use api_types::user::user_server::UserServer;
-use azure_sdk_storage_core::client as blob_client;
-use azure_sdk_storage_core::key_client::KeyClient;
+use azure_sdk_storage_core::{client as blob_client, key_client::KeyClient};
 use config::Config;
-use diesel::r2d2::{ConnectionManager, Pool};
-use diesel::result::Error as DieselError;
-use diesel::SqliteConnection;
-use openid::biscuit::Url;
-use openid::{Client, CompactJson, Discovered, Jws, SingleOrMultiple, Userinfo};
-use serde::{Deserialize, Serialize};
-use std::env;
-use std::error::Error;
-use tonic::metadata::MetadataValue;
-use tonic::transport::Server;
-use tonic::{Request, Status};
+use diesel::{
+    r2d2::{ConnectionManager, Pool},
+    result::Error as DieselError,
+    SqliteConnection
+};
+use openid::{biscuit::Url, Client, CompactJson, Discovered, Jws, SingleOrMultiple, Userinfo};
 use r2d2::PooledConnection;
-use std::sync::Arc;
-use crate::settings::{Settings, Authentication, Storage};
-use crate::user::UserService;
+use serde::{Deserialize, Serialize};
+use std::{env, error::Error, sync::Arc};
+use tonic::{metadata::MetadataValue, transport::Server, Request, Status};
 
 mod db;
 mod settings;
@@ -36,7 +34,7 @@ impl<T> IntoStatus<T> for Result<T, DieselError> {
         self.map_err(|err| match err {
             DieselError::NotFound => Status::not_found(""),
             DieselError::DatabaseError(_, info) => Status::aborted(info.message()),
-            _ => Status::aborted("database error"),
+            _ => Status::aborted("database error")
         })
     }
 }
@@ -49,7 +47,7 @@ impl<T> IntoStatus<T> for Result<T, r2d2::Error> {
 
 pub struct State {
     db: Database,
-    conf: Settings,
+    conf: Settings
 }
 
 impl State {
@@ -61,7 +59,7 @@ impl State {
         let Settings {
             storage: Storage {
                 blob_account,
-                blob_key,
+                blob_key
             },
             ..
         } = &self.conf;
@@ -99,7 +97,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             client_id.to_string(),
             client_secret.to_string(),
             None,
-            issuer.parse()?,
+            issuer.parse()?
         )
     }
     .await
@@ -136,7 +134,7 @@ struct Claims {
     #[serde(default)]
     azp: Option<String>,
     ver: String,
-    iat: i64,
+    iat: i64
 }
 
 const USER_INFO: Userinfo = Userinfo {
@@ -159,7 +157,7 @@ const USER_INFO: Userinfo = Userinfo {
     phone_number: None,
     phone_number_verified: false,
     address: None,
-    updated_at: None,
+    updated_at: None
 };
 
 impl openid::Claims for Claims {
@@ -218,7 +216,7 @@ impl openid::Claims for Claims {
 impl CompactJson for Claims {}
 
 fn authorize(
-    client: Client<Discovered, Claims>,
+    client: Client<Discovered, Claims>
 ) -> impl Fn(Request<()>) -> Result<Request<()>, Status> {
     move |mut req| {
         if let Some(token) = req.metadata().get("authorization") {
@@ -232,7 +230,7 @@ fn authorize(
             client.validate_token(&mut token, None, None).unwrap();
             let token = match token {
                 Jws::Decoded { payload, .. } => payload,
-                Jws::Encoded(_) => unreachable!(),
+                Jws::Encoded(_) => unreachable!()
             };
             let json = serde_json::to_string(&token).unwrap();
             let meta = MetadataValue::from_str(&json).unwrap();

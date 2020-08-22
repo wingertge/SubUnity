@@ -1,23 +1,29 @@
-use crate::{Auth, ApiConn};
-use rocket::http::{Cookie, CookieJar};
-use rocket::response::Redirect;
-use rocket::response::status::Unauthorized;
-use openid::{Token, Options, Bearer, DiscoveredClient};
-use rocket::{State, Request};
-use crate::settings::Settings;
-use rocket::request::{FromRequest, Outcome};
-use rocket::outcome::IntoOutcome;
-use std::convert::Infallible;
-use tonic::metadata::{MetadataValue, Ascii};
-use tonic::transport::Channel;
+use crate::{settings::Settings, ApiConn, Auth};
 use api_types::user::user_client::UserClient;
-use rocket::futures::executor;
+use openid::{Bearer, DiscoveredClient, Options, Token};
+use rocket::{
+    futures::executor,
+    http::{Cookie, CookieJar},
+    outcome::IntoOutcome,
+    request::{FromRequest, Outcome},
+    response::{status::Unauthorized, Redirect},
+    Request, State
+};
+use std::convert::Infallible;
+use tonic::{
+    metadata::{Ascii, MetadataValue},
+    transport::Channel
+};
 
 pub struct User {
     pub(crate) token: Token
 }
 
-fn refresh_if_expired(request: &Request<'_>, mut bearer: Bearer, auth: &DiscoveredClient) -> Option<Bearer> {
+fn refresh_if_expired(
+    request: &Request<'_>,
+    mut bearer: Bearer,
+    auth: &DiscoveredClient
+) -> Option<Bearer> {
     if bearer.expired() {
         bearer = executor::block_on(auth.ensure_token(bearer)).ok()?;
         request.cookies().add_private(auth_cookie(&bearer));
@@ -32,13 +38,18 @@ impl<'a, 'r> FromRequest<'a, 'r> for User {
     async fn from_request(request: &'a Request<'r>) -> Outcome<Self, Self::Error> {
         let auth = request.managed_state::<DiscoveredClient>();
         if let Some(auth) = auth {
-            request.cookies()
+            request
+                .cookies()
                 .get_private("__auth__")
                 .and_then(|cookie| serde_json::from_str::<Bearer>(cookie.value()).ok())
                 .and_then(|bearer| refresh_if_expired(request, bearer, auth))
-                .map(|bearer| User { token: bearer.into() })
+                .map(|bearer| User {
+                    token: bearer.into()
+                })
                 .or_forward(())
-        } else { Outcome::Forward(()) }
+        } else {
+            Outcome::Forward(())
+        }
     }
 }
 
@@ -55,7 +66,7 @@ pub struct AuthenticatedApiConn<'r> {
     token: MetadataValue<Ascii>
 }
 
-impl <'r> AuthenticatedApiConn<'r> {
+impl<'r> AuthenticatedApiConn<'r> {
     pub fn user(&self) -> UserClient<Channel> {
         let token = self.token.clone();
         UserClient::with_interceptor(self.inner.clone(), move |mut req: tonic::Request<()>| {
@@ -87,7 +98,11 @@ fn auth_cookie(token: &Bearer) -> Cookie<'static> {
 }
 
 #[get("/login/oauth2/code/oidc?<code>")]
-pub async fn login(auth: Auth<'_>, code: String, cookies: &CookieJar<'_>) -> Result<Redirect, Unauthorized<String>> {
+pub async fn login(
+    auth: Auth<'_>,
+    code: String,
+    cookies: &CookieJar<'_>
+) -> Result<Redirect, Unauthorized<String>> {
     match request_token(auth, code).await {
         Ok(None) => Err(Unauthorized(None)),
         Err(err) => Err(Unauthorized(Some(format!("{:?}", err)))),
@@ -98,14 +113,17 @@ pub async fn login(auth: Auth<'_>, code: String, cookies: &CookieJar<'_>) -> Res
     }
 }
 
-async fn request_token(auth: Auth<'_>, code: String) -> Result<Option<Token>, openid::error::Error> {
+async fn request_token(
+    auth: Auth<'_>,
+    code: String
+) -> Result<Option<Token>, openid::error::Error> {
     let mut token: Token = auth.request_token(&code).await?.into();
     if let Some(mut id_token) = token.id_token.as_mut() {
         auth.decode_token(&mut id_token)?;
         auth.validate_token(&id_token, None, None)?;
         eprintln!("token: {:#?}", id_token);
     } else {
-        return Ok(None)
+        return Ok(None);
     }
 
     Ok(Some(token))
@@ -114,7 +132,10 @@ async fn request_token(auth: Auth<'_>, code: String) -> Result<Option<Token>, op
 #[get("/login")]
 pub async fn authorize(auth: Auth<'_>, settings: State<'_, Settings>) -> Redirect {
     let auth_url = auth.auth_url(&Options {
-        scope: Some(format!("email offline_access {}/User", settings.authentication.api_url)),
+        scope: Some(format!(
+            "email offline_access {}/User",
+            settings.authentication.api_url
+        )),
         ..Default::default()
     });
 
