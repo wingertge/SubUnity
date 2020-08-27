@@ -8,6 +8,7 @@ use image::imageops::FilterType;
 use std::{fs::remove_file, ops::Deref, sync::Arc};
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
+use image::DynamicImage;
 
 const PFP_SIZE: u32 = 256;
 
@@ -60,6 +61,62 @@ fn get_user<T>(request: &Request<T>, conn: &SqliteConnection) -> Result<models::
         .unwrap_or_else(|| init_user(claims, conn).unwrap()))
 }
 
+impl UserService {
+    #[cfg(feature = "cloud-storage")]
+    async fn save_image(&self, image: DynamicImage, id: &str) {
+        use image::png::{PNGEncoder, CompressionType, self};
+        use image::GenericImageView;
+        use std::io::BufWriter;
+        use azure_sdk_storage_blob::Blob;
+
+        let pixels = image.pixels().collect();
+        let mut image_data = Vec::new();
+        let encoder = PNGEncoder::new_with_quality(
+            BufWriter::new(&mut image_data),
+            CompressionType::Best,
+            png::FilterType::Sub,
+        );
+        encoder.encode(&pixels, PFP_SIZE, PFP_SIZE, image.color());
+
+        let client = self.blob();
+        client
+            .put_block_blob()
+            .with_container_name("profile_pictures")
+            .with_blob_name(id)
+            .with_body(&image_data)
+            .finalize()
+            .await
+            .map_err(|e| Status::aborted(format!("{}", e)))?;
+    }
+
+    #[cfg(not(feature = "cloud-storage"))]
+    async fn save_image(&self, image: DynamicImage, id: &str) {
+        image
+            .save(format!("../target/user_profiles/{}.png", id))
+            .unwrap();
+    }
+
+    #[cfg(feature = "cloud-storage")]
+    async fn remove_image(&self, id: &str) {
+        use azure_sdk_storage_blob::Blob;
+
+        let client = self.blob();
+
+        client
+            .delete_blob()
+            .with_container_name("profile_pictures")
+            .with_blob_name(id)
+            .with_delete_snapshots_method(DeleteSnapshotsMethod::Include)
+            .finalize()
+            .await
+            .map_err(|e| Status::aborted(format!("{}", e)))?;
+    }
+
+    async fn remove_image(&self, id: &str) {
+        remove_file(format!("../target/user_profiles/{}.png", id)).unwrap();
+    }
+}
+
 #[async_trait]
 impl User for UserService {
     async fn send(&self, request: Request<SayRequest>) -> Result<Response<SayResponse>, Status> {
@@ -87,46 +144,13 @@ impl User for UserService {
 
         let image_id = Uuid::new_v4().to_string();
 
-        //Temporary dev thing
-        image
-            .save(format!("../target/user_profiles/{}.png", image_id))
-            .unwrap();
-
-        //Proper thing using azure blob storage
-        /*        let pixels = image.pixels().collect();
-        let mut image_data = Vec::new();
-        let encoder = PNGEncoder::new_with_quality(
-            BufWriter::new(&mut image_data),
-            CompressionType::Best,
-            png::FilterType::Sub,
-        );
-        encoder.encode(&pixels, PFP_SIZE, PFP_SIZE, image.color());
-
-        let client = self.blob();
-        client
-            .put_block_blob()
-            .with_container_name("profile_pictures")
-            .with_blob_name(&image_id)
-            .with_body(&image_data)
-            .finalize()
-            .await
-            .map_err(|e| Status::aborted(format!("{}", e)))?;*/
+        self.save_image(image, &image_id).await;
 
         let conn = self.db()?;
         let user = get_user(&request, &conn)?;
 
         if let Some(current_picture) = user.picture {
-            //dev thing
-            remove_file(format!("../target/user_profiles/{}.png", current_picture)).unwrap();
-
-            //real thing
-            /*            client
-            .delete_blob()
-            .with_container_name("profile_pictures")
-            .with_blob_name(&picture)
-            .with_delete_snapshots_method(DeleteSnapshotsMethod::Include)
-            .finalize()
-            .map_err(|e| Status::aborted(format!("{}", e)))?;*/
+            self.remove_image(&current_picture).await;
         }
 
         diesel::update(users.find(user.id))

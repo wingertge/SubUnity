@@ -5,6 +5,8 @@ authors = ["Genna Wingert <wingertge@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+cloud-storage = ["azure_sdk_storage_blob", "azure_sdk_storage_core"]
 
 [dependencies]
 prost = "0.6"
@@ -21,6 +23,6 @@ serde_json = "1"
 config = "0.10"
 r2d2 = "0.8"
 image = "0.23"
-azure_sdk_storage_blob = "0.45"
-azure_sdk_storage_core = "0.44"
-uuid = "0.8"
+azure_sdk_storage_blob = { version = "0.45", optional = true }
+azure_sdk_storage_core = { version = "0.44", optional = true }
+uuid = { version = "0.8", features = ["v4"] }

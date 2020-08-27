@@ -4,11 +4,10 @@ extern crate async_trait;
 extern crate diesel;
 
 use crate::{
-    settings::{Authentication, Settings, Storage},
+    settings::{Authentication, Settings},
     user::UserService
 };
 use api_types::user::user_server::UserServer;
-use azure_sdk_storage_core::{client as blob_client, key_client::KeyClient};
 use config::Config;
 use diesel::{
     r2d2::{ConnectionManager, Pool},
@@ -47,6 +46,7 @@ impl<T> IntoStatus<T> for Result<T, r2d2::Error> {
 
 pub struct State {
     db: Database,
+    #[allow(dead_code)]
     conf: Settings
 }
 
@@ -55,7 +55,11 @@ impl State {
         self.db.get().into_status()
     }
 
-    pub fn blob(&self) -> KeyClient {
+    #[cfg(feature = "cloud-storage")]
+    pub fn blob(&self) -> azure_sdk_storage_core::key_client::KeyClient {
+        use azure_sdk_storage_core::client as blob_client;
+        use settings::Storage;
+
         let Settings {
             storage: Storage {
                 blob_account,
