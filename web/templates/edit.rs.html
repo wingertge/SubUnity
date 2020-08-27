@@ -1,0 +1,14 @@
+@(video_id: &str)
+
+<html lang="en">
+    <head>
+        <title>Hello World!</title>
+        <script id="js-init">
+            window.VIDEO_ID = "@video_id"
+            document.getElementById("js-init").remove()
+        </script>
+    </head>
+    <body>
+        <script src="/js/bundle.js" async></script>
+    </body>
+</html>

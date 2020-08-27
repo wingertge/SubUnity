@@ -1,7 +1,13 @@
 use std::io::{self, Write};
 use std::fmt::Display;
 
-pub mod statics;mod template_index_html;
+pub mod statics;mod template_edit_html;
+pub use self::template_edit_html::edit_html;
+
+#[deprecated(since="0.7.4", note="please use `edit_html` instead")]
+pub use self::edit_html as edit;
+
+mod template_index_html;
 pub use self::template_index_html::index_html;
 
 #[deprecated(since="0.7.4", note="please use `index_html` instead")]

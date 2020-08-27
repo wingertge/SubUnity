@@ -8,6 +8,8 @@ use crate::User;
 pub fn profile_html<W>(mut _ructe_out_: &mut W, user: User, profile_picture: &str) -> io::Result<()> where W: ?Sized, for<'a> &'a mut W: Write {
 _ructe_out_.write_all(b"<html lang=\"en\">\r\n    <body>\r\n        <p>")?;
 user.username.to_html(&mut _ructe_out_)?;
-_ructe_out_.write_all(b"</p>\r\n    </body>\r\n</html>")?;
+_ructe_out_.write_all(b"</p>\r\n        ")?;
+profile_picture.to_html(&mut _ructe_out_)?;
+_ructe_out_.write_all(b"\r\n    </body>\r\n</html>")?;
 Ok(())
 }

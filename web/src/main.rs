@@ -21,6 +21,8 @@ use std::{error::Error, path::PathBuf, io};
 use tonic::transport::Channel;
 pub use authentication::User;
 use crate::authentication::{AuthClient, Claims};
+use rocket_contrib::serve::StaticFiles;
+use crate::templates::edit_html;
 
 mod authentication;
 mod profile;
@@ -57,6 +59,11 @@ fn asset(path: PathBuf) -> Result<&'static [u8], NotFound<()>> {
     StaticFile::get(path.to_str().unwrap())
         .map(|file| file.content)
         .ok_or_else(|| NotFound(()))
+}
+
+#[get("/edit/<video_id>")]
+fn edit(video_id: String) -> Template {
+    template(|w| edit_html(w, &video_id))
 }
 
 pub struct ApiConn(pub Channel);
@@ -113,9 +120,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 authentication::login,
                 authentication::authorize,
                 profile::profile,
-                profile::profile_unauthorized
+                profile::profile_unauthorized,
+                edit
             ]
         )
+        .mount("/js", StaticFiles::from("./js/build"))
         .launch()
         .await?;
 
