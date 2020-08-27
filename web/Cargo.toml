@@ -19,7 +19,7 @@ failure = "0.1"
 async-trait = "0.1"
 
 [build-dependencies]
-ructe = "0.11"
+ructe = { git = "https://github.com/wingertge/ructe.git" }
 
 [dependencies.rocket_contrib]
 git = "https://github.com/SergioBenitez/Rocket.git"

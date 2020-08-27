@@ -1,13 +1,10 @@
-use std::{
-    fmt::Display,
-    io::{self, Write}
-};
+use std::io::{self, Write};
+use std::fmt::Display;
 
-pub mod statics;
-mod template_index_html;
+pub mod statics;mod template_index_html;
 pub use self::template_index_html::index_html;
 
-#[deprecated(since = "0.7.4", note = "please use `index_html` instead")]
+#[deprecated(since="0.7.4", note="please use `index_html` instead")]
 pub use self::index_html as index;
 
 /// This trait should be implemented for any value that can be the
@@ -19,6 +16,64 @@ pub use self::index_html as index;
 pub trait ToHtml {
     /// Write self to `out`, which is in html representation.
     fn to_html(&self, out: &mut dyn Write) -> io::Result<()>;
+
+    /// Write the HTML represention of this value to a buffer.
+    ///
+    /// This can be used for testing, and for short-cutting situations
+    /// with complex ownership, since the resulting buffer gets owned
+    /// by the caller.
+    ///
+    /// # Examples
+    /// ```
+    /// fn main() -> std::io::Result<()> {
+    /// use ructe::templates::ToHtml;
+    /// assert_eq!(17_u8.to_buffer().unwrap(), &b"17"[..]);
+    /// assert_eq!("a < b".to_buffer()?, "a &lt; b");
+    /// Ok(())
+    /// }
+    /// ```
+    fn to_buffer(&self) -> io::Result<HtmlBuffer> {
+        let mut buf = Vec::new();
+        self.to_html(&mut buf)?;
+        Ok(HtmlBuffer { buf })
+    }
+}
+
+/// Return type for [`ToHtml::to_buffer`].
+///
+/// An opaque heap-allocated buffer containing a rendered HTML snippet.
+pub struct HtmlBuffer {
+    buf: Vec<u8>,
+}
+
+impl std::fmt::Debug for HtmlBuffer {
+    fn fmt(&self, out: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(out, "HtmlBuffer({:?})", String::from_utf8_lossy(&self.buf))
+    }
+}
+
+impl ToHtml for HtmlBuffer {
+    fn to_html(&self, out: &mut dyn Write) -> io::Result<()> {
+        out.write_all(&self.buf)
+    }
+}
+
+impl AsRef<[u8]> for HtmlBuffer {
+    fn as_ref(&self) -> &[u8] {
+        &self.buf
+    }
+}
+
+impl PartialEq<&[u8]> for HtmlBuffer {
+    fn eq(&self, other: &&[u8]) -> bool {
+        &self.buf == other
+    }
+}
+impl PartialEq<&str> for HtmlBuffer {
+    fn eq(&self, other: &&str) -> bool {
+        let other: &[u8] = other.as_ref();
+        self.buf == other
+    }
 }
 
 /// Wrapper object for data that should be outputted as raw html
@@ -51,7 +106,9 @@ impl<'a> Write for ToHtmlEscapingWriter<'a> {
         // quickly skip over data that doesn't need escaping
         let n = data
             .iter()
-            .take_while(|&&c| c != b'"' && c != b'&' && c != b'\'' && c != b'<' && c != b'>')
+            .take_while(|&&c| {
+                c != b'"' && c != b'&' && c != b'\'' && c != b'<' && c != b'>'
+            })
             .count();
         if n > 0 {
             self.0.write(&data[0..n])
@@ -68,7 +125,10 @@ impl<'a> Write for ToHtmlEscapingWriter<'a> {
 
 impl<'a> ToHtmlEscapingWriter<'a> {
     #[inline(never)]
-    fn write_one_byte_escaped(out: &mut impl Write, data: &[u8]) -> io::Result<usize> {
+    fn write_one_byte_escaped(
+        out: &mut impl Write,
+        data: &[u8],
+    ) -> io::Result<usize> {
         let next = data.get(0);
         out.write_all(match next {
             Some(b'"') => b"&quot;",
@@ -78,8 +138,9 @@ impl<'a> ToHtmlEscapingWriter<'a> {
             None => return Ok(0),
             // we know this function is called only for chars that need escaping,
             // so we don't have to handle the "other" case (this one is for `'`)
-            _ => b"&#39;"
+            _ => b"&#39;",
         })?;
         Ok(1)
     }
 }
+
