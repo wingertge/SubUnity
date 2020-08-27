@@ -11,14 +11,16 @@ use crate::{
 use api_types::user::{user_client::UserClient, SayRequest};
 use config::Config;
 use failure::Fail;
-use openid::DiscoveredClient;
+use openid::{Client, Discovered};
 use rocket::{
     response::{content::Html, status::NotFound},
     State
 };
 use rocket_contrib::helmet::SpaceHelmet;
-use std::{error::Error, path::PathBuf};
+use std::{error::Error, path::PathBuf, io};
 use tonic::transport::Channel;
+pub use authentication::User;
+use crate::authentication::{AuthClient, Claims};
 
 mod authentication;
 mod profile;
@@ -28,11 +30,11 @@ mod templates;
 type Template = Html<Vec<u8>>;
 pub type API<'a> = State<'a, ApiConn>;
 pub type AuthAPI<'a> = AuthenticatedApiConn<'a>;
-type Auth<'a> = State<'a, DiscoveredClient>;
+type Auth<'a> = State<'a, AuthClient>;
 
-fn write_html<F: FnOnce(&mut Vec<u8>)>(f: F) -> Template {
+fn template<F: FnOnce(&mut Vec<u8>) -> io::Result<()>>(f: F) -> Template {
     let mut buf = Vec::new();
-    f(&mut buf);
+    f(&mut buf).unwrap();
     Html(buf)
 }
 
@@ -42,12 +44,12 @@ async fn index(api: AuthAPI<'_>) -> Template {
         name: "Lisa".to_string()
     });
     let response = api.user().send(request).await.unwrap().into_inner();
-    write_html(|out| index_html(out, &response.message, &["test item"]).unwrap())
+    template(|out| index_html(out, &response.message, &["test item"]))
 }
 
 #[get("/", rank = 2)]
 async fn index2() -> Template {
-    write_html(|out| index_html(out, "Lisa", &["test item"]).unwrap())
+    template(|out| index_html(out, "Lisa", &["test item"]))
 }
 
 #[get("/static/<path..>")]
@@ -85,7 +87,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 }
         } = &settings;
 
-        DiscoveredClient::discover(
+        Client::<Discovered, Claims>::discover(
             client_id.to_string(),
             client_secret.to_string(),
             Some("http://localhost:8000/login/oauth2/code/oidc".to_string()),

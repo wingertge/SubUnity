@@ -232,10 +232,7 @@ fn authorize(
             let mut token = Jws::new_encoded(&token);
             client.decode_token(&mut token).unwrap();
             client.validate_token(&mut token, None, None).unwrap();
-            let token = match token {
-                Jws::Decoded { payload, .. } => payload,
-                Jws::Encoded(_) => unreachable!()
-            };
+            let token = token.payload().unwrap();
             let json = serde_json::to_string(&token).unwrap();
             let meta = MetadataValue::from_str(&json).unwrap();
             req.metadata_mut().insert("user", meta);

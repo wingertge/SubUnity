@@ -7,6 +7,12 @@ pub use self::template_index_html::index_html;
 #[deprecated(since="0.7.4", note="please use `index_html` instead")]
 pub use self::index_html as index;
 
+mod template_profile_html;
+pub use self::template_profile_html::profile_html;
+
+#[deprecated(since="0.7.4", note="please use `profile_html` instead")]
+pub use self::profile_html as profile;
+
 /// This trait should be implemented for any value that can be the
 /// result of an expression in a template.
 ///
