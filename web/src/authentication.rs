@@ -194,23 +194,21 @@ impl<'a, 'r> FromRequest<'a, 'r> for User {
     type Error = Infallible;
 
     async fn from_request(request: &'a Request<'r>) -> Outcome<Self, Self::Error> {
-        let auth = request.managed_state::<AuthClient>();
-        if let Some(auth) = auth {
-            let settings = request.managed_state::<Settings>().unwrap();
-            token_from_cookies(request.cookies(), settings, auth)
-                .and_then(|token| refresh_if_expired(request, token, auth))
-                .and_then(|token| validate(token, auth))
-                .and_then(|token| {
-                    let claims = token_claims(&token)?;
-                    Some(User {
-                        username: claims.name.to_string(),
-                        token
+        request.managed_state::<AuthClient>()
+            .zip(request.managed_state::<Settings>())
+            .and_then(|(auth, settings)| {
+                token_from_cookies(request.cookies(), settings, auth)
+                    .and_then(|token| refresh_if_expired(request, token, auth))
+                    .and_then(|token| validate(token, auth))
+                    .and_then(|token| {
+                        let claims = token_claims(&token)?;
+                        Some(User {
+                            username: claims.name.to_string(),
+                            token
+                        })
                     })
-                })
-                .or_forward(())
-        } else {
-            Outcome::Forward(())
-        }
+            })
+            .or_forward(())
     }
 }
 
@@ -242,15 +240,13 @@ impl<'a, 'r> FromRequest<'a, 'r> for AuthenticatedApiConn<'r> {
     type Error = Infallible;
 
     async fn from_request(request: &'a Request<'r>) -> Outcome<Self, Self::Error> {
-        let user = request.guard::<User>().await;
-        let api = request.managed_state::<ApiConn>();
-        match (user, api) {
-            (Outcome::Success(user), Some(api)) => Outcome::Success(AuthenticatedApiConn {
+        request.guard::<User>().await.succeeded()
+            .zip(request.managed_state::<ApiConn>())
+            .map(|(user, api)| AuthenticatedApiConn {
                 inner: &api.0,
                 token: bearer(&user)
-            }),
-            _ => Outcome::Forward(())
-        }
+            })
+            .or_forward(())
     }
 }
 
