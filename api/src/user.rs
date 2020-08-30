@@ -2,13 +2,14 @@ use crate::{
     db::{models, models::NewUser},
     Claims, IntoStatus, State
 };
-use api_types::user::{user_server::User, ImageUploadRequest, SayRequest, SayResponse};
+use api_types::user::{
+    user_service_server, ImageUploadRequest, SayRequest, SayResponse, User, UserIdentity
+};
 use diesel::{ExpressionMethods, QueryDsl, QueryResult, RunQueryDsl, SqliteConnection};
-use image::imageops::FilterType;
+use image::{imageops::FilterType, DynamicImage};
 use std::{fs::remove_file, ops::Deref, sync::Arc};
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
-use image::DynamicImage;
 
 const PFP_SIZE: u32 = 256;
 
@@ -19,6 +20,16 @@ impl Deref for UserService {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl From<models::User> for User {
+    fn from(user: models::User) -> Self {
+        User {
+            id: user.id,
+            username: user.username,
+            email: user.email.unwrap_or_else(|| String::new())
+        }
     }
 }
 
@@ -64,17 +75,19 @@ fn get_user<T>(request: &Request<T>, conn: &SqliteConnection) -> Result<models::
 impl UserService {
     #[cfg(feature = "cloud-storage")]
     async fn save_image(&self, image: DynamicImage, id: &str) {
-        use image::png::{PNGEncoder, CompressionType, self};
-        use image::GenericImageView;
-        use std::io::BufWriter;
         use azure_sdk_storage_blob::Blob;
+        use image::{
+            png::{self, CompressionType, PNGEncoder},
+            GenericImageView
+        };
+        use std::io::BufWriter;
 
         let pixels = image.pixels().collect();
         let mut image_data = Vec::new();
         let encoder = PNGEncoder::new_with_quality(
             BufWriter::new(&mut image_data),
             CompressionType::Best,
-            png::FilterType::Sub,
+            png::FilterType::Sub
         );
         encoder.encode(&pixels, PFP_SIZE, PFP_SIZE, image.color());
 
@@ -118,7 +131,7 @@ impl UserService {
 }
 
 #[async_trait]
-impl User for UserService {
+impl user_service_server::UserService for UserService {
     async fn send(&self, request: Request<SayRequest>) -> Result<Response<SayResponse>, Status> {
         let conn = self.db()?;
         let user = get_user(&request, &conn)?;
@@ -162,5 +175,12 @@ impl User for UserService {
             code: 400,
             message: String::new()
         }))
+    }
+
+    async fn get_user(&self, request: Request<UserIdentity>) -> Result<Response<User>, Status> {
+        let conn = self.db.get().into_status()?;
+        get_user(&request, &conn)
+            .map(Into::into)
+            .map(|user| Response::new(user))
     }
 }

@@ -7,7 +7,7 @@ use crate::{
     settings::{Authentication, Settings},
     user::UserService
 };
-use api_types::user::user_server::UserServer;
+use api_types::user::user_service_server::UserServiceServer;
 use config::Config;
 use diesel::{
     r2d2::{ConnectionManager, Pool},
@@ -116,7 +116,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     });
 
     let addr = "[::1]:50051".parse().unwrap();
-    let user = UserServer::with_interceptor(UserService(state.clone()), authorize(auth));
+    let user = UserServiceServer::with_interceptor(UserService(state.clone()), authorize(auth));
     println!("Server listening on {}", addr);
     Server::builder().add_service(user).serve(addr).await?;
     Ok(())

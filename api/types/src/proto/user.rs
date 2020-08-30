@@ -1,4 +1,18 @@
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UserIdentity {
+    #[prost(string, tag = "1")]
+    pub sub: std::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct User {
+    #[prost(string, tag = "1")]
+    pub id: std::string::String,
+    #[prost(string, tag = "2")]
+    pub username: std::string::String,
+    #[prost(string, tag = "3")]
+    pub email: std::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SayRequest {
     #[prost(string, tag = "1")]
     pub name: std::string::String,
@@ -44,13 +58,13 @@ pub struct Status {
     pub message: std::string::String,
 }
 #[doc = r" Generated client implementations."]
-pub mod user_client {
+pub mod user_service_client {
     #![allow(unused_variables, dead_code, missing_docs)]
     use tonic::codegen::*;
-    pub struct UserClient<T> {
+    pub struct UserServiceClient<T> {
         inner: tonic::client::Grpc<T>,
     }
-    impl UserClient<tonic::transport::Channel> {
+    impl UserServiceClient<tonic::transport::Channel> {
         #[doc = r" Attempt to create a new client by connecting to a given endpoint."]
         pub async fn connect<D>(dst: D) -> Result<Self, tonic::transport::Error>
         where
@@ -61,7 +75,7 @@ pub mod user_client {
             Ok(Self::new(conn))
         }
     }
-    impl<T> UserClient<T>
+    impl<T> UserServiceClient<T>
     where
         T: tonic::client::GrpcService<tonic::body::BoxBody>,
         T::ResponseBody: Body + HttpBody + Send + 'static,
@@ -87,7 +101,7 @@ pub mod user_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static("/user.User/Send");
+            let path = http::uri::PathAndQuery::from_static("/user.UserService/Send");
             self.inner.unary(request.into_request(), path, codec).await
         }
         pub async fn set_profile_picture(
@@ -101,30 +115,44 @@ pub mod user_client {
                 )
             })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static("/user.User/SetProfilePicture");
+            let path = http::uri::PathAndQuery::from_static("/user.UserService/SetProfilePicture");
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        pub async fn get_user(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UserIdentity>,
+        ) -> Result<tonic::Response<super::User>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/user.UserService/GetUser");
             self.inner.unary(request.into_request(), path, codec).await
         }
     }
-    impl<T: Clone> Clone for UserClient<T> {
+    impl<T: Clone> Clone for UserServiceClient<T> {
         fn clone(&self) -> Self {
             Self {
                 inner: self.inner.clone(),
             }
         }
     }
-    impl<T> std::fmt::Debug for UserClient<T> {
+    impl<T> std::fmt::Debug for UserServiceClient<T> {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            write!(f, "UserClient {{ ... }}")
+            write!(f, "UserServiceClient {{ ... }}")
         }
     }
 }
 #[doc = r" Generated server implementations."]
-pub mod user_server {
+pub mod user_service_server {
     #![allow(unused_variables, dead_code, missing_docs)]
     use tonic::codegen::*;
-    #[doc = "Generated trait containing gRPC methods that should be implemented for use with UserServer."]
+    #[doc = "Generated trait containing gRPC methods that should be implemented for use with UserServiceServer."]
     #[async_trait]
-    pub trait User: Send + Sync + 'static {
+    pub trait UserService: Send + Sync + 'static {
         async fn send(
             &self,
             request: tonic::Request<super::SayRequest>,
@@ -133,13 +161,17 @@ pub mod user_server {
             &self,
             request: tonic::Request<super::ImageUploadRequest>,
         ) -> Result<tonic::Response<super::Status>, tonic::Status>;
+        async fn get_user(
+            &self,
+            request: tonic::Request<super::UserIdentity>,
+        ) -> Result<tonic::Response<super::User>, tonic::Status>;
     }
     #[derive(Debug)]
-    pub struct UserServer<T: User> {
+    pub struct UserServiceServer<T: UserService> {
         inner: _Inner<T>,
     }
     struct _Inner<T>(Arc<T>, Option<tonic::Interceptor>);
-    impl<T: User> UserServer<T> {
+    impl<T: UserService> UserServiceServer<T> {
         pub fn new(inner: T) -> Self {
             let inner = Arc::new(inner);
             let inner = _Inner(inner, None);
@@ -151,9 +183,9 @@ pub mod user_server {
             Self { inner }
         }
     }
-    impl<T, B> Service<http::Request<B>> for UserServer<T>
+    impl<T, B> Service<http::Request<B>> for UserServiceServer<T>
     where
-        T: User,
+        T: UserService,
         B: HttpBody + Send + Sync + 'static,
         B::Error: Into<StdError> + Send + 'static,
     {
@@ -166,10 +198,10 @@ pub mod user_server {
         fn call(&mut self, req: http::Request<B>) -> Self::Future {
             let inner = self.inner.clone();
             match req.uri().path() {
-                "/user.User/Send" => {
+                "/user.UserService/Send" => {
                     #[allow(non_camel_case_types)]
-                    struct SendSvc<T: User>(pub Arc<T>);
-                    impl<T: User> tonic::server::UnaryService<super::SayRequest> for SendSvc<T> {
+                    struct SendSvc<T: UserService>(pub Arc<T>);
+                    impl<T: UserService> tonic::server::UnaryService<super::SayRequest> for SendSvc<T> {
                         type Response = super::SayResponse;
                         type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
@@ -197,10 +229,12 @@ pub mod user_server {
                     };
                     Box::pin(fut)
                 }
-                "/user.User/SetProfilePicture" => {
+                "/user.UserService/SetProfilePicture" => {
                     #[allow(non_camel_case_types)]
-                    struct SetProfilePictureSvc<T: User>(pub Arc<T>);
-                    impl<T: User> tonic::server::UnaryService<super::ImageUploadRequest> for SetProfilePictureSvc<T> {
+                    struct SetProfilePictureSvc<T: UserService>(pub Arc<T>);
+                    impl<T: UserService> tonic::server::UnaryService<super::ImageUploadRequest>
+                        for SetProfilePictureSvc<T>
+                    {
                         type Response = super::Status;
                         type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
@@ -228,6 +262,37 @@ pub mod user_server {
                     };
                     Box::pin(fut)
                 }
+                "/user.UserService/GetUser" => {
+                    #[allow(non_camel_case_types)]
+                    struct GetUserSvc<T: UserService>(pub Arc<T>);
+                    impl<T: UserService> tonic::server::UnaryService<super::UserIdentity> for GetUserSvc<T> {
+                        type Response = super::User;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::UserIdentity>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).get_user(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1.clone();
+                        let inner = inner.0;
+                        let method = GetUserSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
                 _ => Box::pin(async move {
                     Ok(http::Response::builder()
                         .status(200)
@@ -238,13 +303,13 @@ pub mod user_server {
             }
         }
     }
-    impl<T: User> Clone for UserServer<T> {
+    impl<T: UserService> Clone for UserServiceServer<T> {
         fn clone(&self) -> Self {
             let inner = self.inner.clone();
             Self { inner }
         }
     }
-    impl<T: User> Clone for _Inner<T> {
+    impl<T: UserService> Clone for _Inner<T> {
         fn clone(&self) -> Self {
             Self(self.0.clone(), self.1.clone())
         }
@@ -254,7 +319,7 @@ pub mod user_server {
             write!(f, "{:?}", self.0)
         }
     }
-    impl<T: User> tonic::transport::NamedService for UserServer<T> {
-        const NAME: &'static str = "user.User";
+    impl<T: UserService> tonic::transport::NamedService for UserServiceServer<T> {
+        const NAME: &'static str = "user.UserService";
     }
 }

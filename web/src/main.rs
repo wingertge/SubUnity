@@ -4,25 +4,22 @@ extern crate rocket;
 extern crate async_trait;
 
 use crate::{
-    authentication::AuthenticatedApiConn,
+    authentication::{AuthClient, AuthenticatedApiConn},
     settings::{Authentication, Settings},
-    templates::{index_html, statics::StaticFile}
+    templates::{edit_html, index_html, statics::StaticFile}
 };
-use api_types::user::{user_client::UserClient, SayRequest};
+use api_types::user::{user_service_client::UserServiceClient, SayRequest};
 use config::Config;
 use failure::Fail;
-use openid::{Client, Discovered};
 use rocket::{
     response::{content::Html, status::NotFound},
     State
 };
-use rocket_contrib::helmet::SpaceHelmet;
-use std::{error::Error, path::PathBuf, io};
+use rocket_contrib::{helmet::SpaceHelmet, serve::StaticFiles};
+use std::{error::Error, io, path::PathBuf};
 use tonic::transport::Channel;
-pub use authentication::User;
-use crate::authentication::{AuthClient, Claims};
-use rocket_contrib::serve::StaticFiles;
-use crate::templates::edit_html;
+pub use api_types::user::User;
+use crate::authentication::UserCache;
 
 mod authentication;
 mod profile;
@@ -69,8 +66,8 @@ fn edit(video_id: String) -> Template {
 pub struct ApiConn(pub Channel);
 
 impl ApiConn {
-    pub fn user(&self) -> UserClient<Channel> {
-        UserClient::new(self.0.clone())
+    pub fn user(&self) -> UserServiceClient<Channel> {
+        UserServiceClient::new(self.0.clone())
     }
 }
 
@@ -94,7 +91,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 }
         } = &settings;
 
-        Client::<Discovered, Claims>::discover(
+        AuthClient::discover(
             client_id.to_string(),
             client_secret.to_string(),
             Some("http://localhost:8000/login/oauth2/code/oidc".to_string()),
@@ -106,11 +103,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let channel = Channel::from_static("http://[::1]:50051").connect().await?;
 
+    let user_cache = UserCache::new();
+
     rocket::ignite()
         .attach(SpaceHelmet::default())
         .manage(auth)
         .manage(ApiConn(channel))
         .manage(settings)
+        .manage(user_cache)
         .mount(
             "/",
             routes![

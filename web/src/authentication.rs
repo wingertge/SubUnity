@@ -1,138 +1,45 @@
 use crate::{settings::Settings, ApiConn, Auth};
-use api_types::user::user_client::UserClient;
-use openid::{Bearer, Options, Token, Userinfo, CompactJson, SingleOrMultiple, Client, Discovered};
+use api_types::user::{user_service_client::UserServiceClient, User, UserIdentity};
+use chrono::{DateTime, NaiveDateTime, Utc};
+use openid::{Bearer, Options, Token, DiscoveredClient, StandardClaims};
 use rocket::{
     futures::executor,
-    http::{Cookie, CookieJar},
+    http::{uri::Origin, Cookie, CookieJar},
     outcome::IntoOutcome,
     request::{FromRequest, Outcome},
     response::{status::Unauthorized, Redirect},
     Request, State
 };
-use std::convert::{Infallible};
+use std::convert::Infallible;
 use tonic::{
     metadata::{Ascii, MetadataValue},
     transport::Channel
 };
-use openid::biscuit::Url;
-use serde::{Serialize, Deserialize};
-use rocket::http::uri::Origin;
-use chrono::{Utc, NaiveDateTime, DateTime};
+use std::collections::BTreeMap;
+use parking_lot::RwLock;
+use std::ops::Deref;
 
 const ACCESS_TOKEN_NAME: &str = "__auth_access__";
 const ID_TOKEN_NAME: &str = "__auth_identity__";
 const REFRESH_TOKEN_NAME: &str = "__auth_refresh__";
 
-pub struct User {
-    pub(crate) token: Token<Claims>,
-    pub username: String
-}
+pub struct CurrentUser(User);
 
-pub type AuthClient = Client<Discovered, Claims>;
+impl Deref for CurrentUser {
+    type Target = User;
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Claims {
-    iss: Url,
-    exp: i64,
-    nbf: i64,
-    aud: SingleOrMultiple<String>,
-    oid: String,
-    sub: String,
-    name: String,
-    #[serde(default)]
-    emails: Vec<String>,
-    tfp: String,
-    #[serde(default)]
-    scp: Option<String>,
-    #[serde(default)]
-    azp: Option<String>,
-    ver: String,
-    iat: i64
-}
-
-const USER_INFO: Userinfo = Userinfo {
-    sub: None,
-    name: None,
-    given_name: None,
-    family_name: None,
-    middle_name: None,
-    nickname: None,
-    preferred_username: None,
-    profile: None,
-    picture: None,
-    website: None,
-    email: None,
-    email_verified: false,
-    gender: None,
-    birthdate: None,
-    zoneinfo: None,
-    locale: None,
-    phone_number: None,
-    phone_number_verified: false,
-    address: None,
-    updated_at: None
-};
-
-impl openid::Claims for Claims {
-    fn iss(&self) -> &Url {
-        &self.iss
-    }
-
-    fn sub(&self) -> &str {
-        &self.sub
-    }
-
-    fn aud(&self) -> &SingleOrMultiple<String> {
-        &self.aud
-    }
-
-    fn exp(&self) -> i64 {
-        self.exp
-    }
-
-    fn iat(&self) -> i64 {
-        self.iat
-    }
-
-    fn auth_time(&self) -> Option<i64> {
-        None
-    }
-
-    fn nonce(&self) -> Option<&String> {
-        None
-    }
-
-    fn at_hash(&self) -> Option<&String> {
-        None
-    }
-
-    fn c_hash(&self) -> Option<&String> {
-        None
-    }
-
-    fn acr(&self) -> Option<&String> {
-        None
-    }
-
-    fn amr(&self) -> Option<&Vec<String>> {
-        None
-    }
-
-    fn azp(&self) -> Option<&String> {
-        self.azp.as_ref()
-    }
-
-    fn userinfo(&self) -> &Userinfo {
-        &USER_INFO
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
-impl CompactJson for Claims {}
+
+pub type AuthClient = DiscoveredClient;
 
 fn refresh_if_expired(
     request: &Request<'_>,
-    mut token: Token<Claims>,
+    mut token: Token,
     auth: &AuthClient
-) -> Option<Token<Claims>> {
+) -> Option<Token> {
     if token.bearer.expired() {
         let cookies = request.cookies();
         let bearer = executor::block_on(auth.ensure_token(token.bearer)).ok()?;
@@ -147,7 +54,7 @@ fn refresh_if_expired(
     Some(token)
 }
 
-fn validate(token: Token<Claims>, auth: &AuthClient) -> Option<Token<Claims>> {
+fn validate(token: Token, auth: &AuthClient) -> Option<Token> {
     if let Some(id_token) = token.id_token.as_ref() {
         auth.validate_token(id_token, None, None).ok()?;
     }
@@ -161,22 +68,30 @@ fn scopes(settings: &Settings) -> Option<String> {
     ))
 }
 
-fn token_from_cookies(cookies: &CookieJar<'_>, settings: &Settings, auth: &AuthClient) -> Option<Token<Claims>> {
+fn token_from_cookies(
+    cookies: &CookieJar<'_>,
+    settings: &Settings,
+    auth: &AuthClient
+) -> Option<Token> {
     let access = cookies.get_private(ACCESS_TOKEN_NAME)?.value().to_string();
-    let id = cookies.get_private(ID_TOKEN_NAME).map(|cookie| cookie.value().to_string());
+    let id = cookies
+        .get_private(ID_TOKEN_NAME)
+        .map(|cookie| cookie.value().to_string());
     let refresh = cookies.get_private(REFRESH_TOKEN_NAME)?.value().to_string();
 
-    let mut token: Token<Claims> = Bearer {
+    let mut token: Token = Bearer {
         access_token: access,
         scope: scopes(settings),
         refresh_token: Some(refresh),
         expires: None,
         id_token: id
-    }.into();
+    }
+    .into();
     if let Some(token) = token.id_token.as_mut() {
         auth.decode_token(token).ok()?;
     }
-    let exp = token.id_token
+    let exp = token
+        .id_token
         .as_ref()
         .map(|token| token.payload().unwrap())
         .map(|token| NaiveDateTime::from_timestamp(token.exp, 0))
@@ -185,35 +100,109 @@ fn token_from_cookies(cookies: &CookieJar<'_>, settings: &Settings, auth: &AuthC
     Some(token)
 }
 
-fn token_claims<C: openid::Claims + CompactJson>(token: &Token<C>) -> Option<&C> {
+fn token_claims(token: &Token) -> Option<&StandardClaims> {
     token.id_token.as_ref()?.payload().ok()
 }
 
+pub struct UserCache {
+    cache: RwLock<BTreeMap<String, User>>
+}
+
+impl UserCache {
+    pub fn new() -> Self {
+        UserCache {
+            cache: RwLock::new(BTreeMap::new())
+        }
+    }
+
+    pub async fn get(&self, id: &str, api: &AuthenticatedApiConn<'_>) -> Option<User> {
+        let mut existing = {
+            let cache = self.cache.read();
+            cache.get(id).cloned()
+        };
+        if existing.is_none() {
+            let user = {
+                let mut api = api.user();
+                api.get_user(tonic::Request::new(UserIdentity {
+                    sub: id.to_string()
+                })).await.unwrap().into_inner()
+            };
+
+            {
+                let mut cache = self.cache.write();
+                cache.insert(id.to_string(), user.clone());
+            }
+
+            existing.replace(user);
+        }
+        existing
+    }
+}
+
+pub struct AuthToken(pub Token);
+
 #[async_trait]
-impl<'a, 'r> FromRequest<'a, 'r> for User {
+impl<'a, 'r> FromRequest<'a, 'r> for AuthToken {
     type Error = Infallible;
 
     async fn from_request(request: &'a Request<'r>) -> Outcome<Self, Self::Error> {
-        request.managed_state::<AuthClient>()
+        request
+            .managed_state::<AuthClient>()
             .zip(request.managed_state::<Settings>())
             .and_then(|(auth, settings)| {
                 token_from_cookies(request.cookies(), settings, auth)
                     .and_then(|token| refresh_if_expired(request, token, auth))
                     .and_then(|token| validate(token, auth))
-                    .and_then(|token| {
-                        let claims = token_claims(&token)?;
-                        Some(User {
-                            username: claims.name.to_string(),
-                            token
-                        })
-                    })
             })
+            .map(|token| AuthToken(token))
             .or_forward(())
     }
 }
 
-fn bearer(user: &User) -> MetadataValue<Ascii> {
-    let token = &user.token.bearer.access_token;
+trait Flatten<A, B, C> {
+    fn flatten(self) -> (A, B, C);
+}
+
+impl<A, B, C> Flatten<A, B, C> for ((A, B), C) {
+    fn flatten(self) -> (A, B, C) {
+        ((self.0).0, (self.0).1, self.1)
+    }
+}
+
+#[async_trait]
+impl<'a, 'r> FromRequest<'a, 'r> for CurrentUser {
+    type Error = Infallible;
+
+    async fn from_request(request: &'a Request<'r>) -> Outcome<Self, Self::Error> {
+        let token = request.guard::<AuthToken>().await.succeeded()
+            .zip(request.managed_state::<ApiConn>())
+            .map(|(token, api)| {
+                let conn = AuthenticatedApiConn::from_parts(&api.0, &token);
+                (token, conn)
+            })
+            .zip(request.managed_state::<UserCache>())
+            .map(Flatten::flatten);
+
+        async fn fetch_user(token: Token, cache: &UserCache, api: &AuthenticatedApiConn<'_>) -> Option<CurrentUser> {
+            let claims = token_claims(&token)?;
+            let user = cache.get(&claims.sub, api).await?;
+            println!(r#"User {{
+                id: {},
+                username: {},
+                email: {}
+            }}"#, user.id, user.username, user.email);
+            Some(CurrentUser(user))
+        }
+
+        let res = if let Some((token, api, cache)) = token {
+            fetch_user(token.0, cache, &api).await
+        } else { None };
+        res.or_forward(())
+    }
+}
+
+fn bearer(user: &AuthToken) -> MetadataValue<Ascii> {
+    let token = &user.0.bearer.access_token;
     let mut result = String::with_capacity(token.len() + 7);
     result.push_str("Bearer ");
     result.push_str(token);
@@ -226,12 +215,22 @@ pub struct AuthenticatedApiConn<'r> {
 }
 
 impl<'r> AuthenticatedApiConn<'r> {
-    pub fn user(&self) -> UserClient<Channel> {
+    pub fn from_parts(inner: &'r Channel, token: &AuthToken) -> Self {
+        Self {
+            inner,
+            token: bearer(token)
+        }
+    }
+
+    pub fn user(&self) -> UserServiceClient<Channel> {
         let token = self.token.clone();
-        UserClient::with_interceptor(self.inner.clone(), move |mut req: tonic::Request<()>| {
-            req.metadata_mut().insert("authorization", token.clone());
-            Ok(req)
-        })
+        UserServiceClient::with_interceptor(
+            self.inner.clone(),
+            move |mut req: tonic::Request<()>| {
+                req.metadata_mut().insert("authorization", token.clone());
+                Ok(req)
+            }
+        )
     }
 }
 
@@ -240,7 +239,10 @@ impl<'a, 'r> FromRequest<'a, 'r> for AuthenticatedApiConn<'r> {
     type Error = Infallible;
 
     async fn from_request(request: &'a Request<'r>) -> Outcome<Self, Self::Error> {
-        request.guard::<User>().await.succeeded()
+        request
+            .guard::<AuthToken>()
+            .await
+            .succeeded()
             .zip(request.managed_state::<ApiConn>())
             .map(|(user, api)| AuthenticatedApiConn {
                 inner: &api.0,
@@ -257,7 +259,7 @@ fn auth_cookies(token: &Bearer) -> Vec<Cookie<'static>> {
         vec![
             access,
             Cookie::new(ID_TOKEN_NAME, id_token.clone()),
-            refresh
+            refresh,
         ]
     } else {
         vec![access, refresh]
@@ -282,7 +284,9 @@ pub async fn login(
                 let value = cookie.value().to_string();
                 cookies.remove(cookie.into_cookie());
                 Ok(Redirect::found(value))
-            } else { Ok(Redirect::found(uri!(super::index))) }
+            } else {
+                Ok(Redirect::found(uri!(super::index)))
+            }
         }
     }
 }
@@ -290,12 +294,12 @@ pub async fn login(
 async fn request_token(
     auth: Auth<'_>,
     code: String
-) -> Result<Option<Token<Claims>>, openid::error::Error> {
-    let mut token: Token<Claims> = auth.request_token(&code).await?.into();
+) -> Result<Option<Token>, openid::error::Error> {
+    let mut token: Token = auth.request_token(&code).await?.into();
     if let Some(mut id_token) = token.id_token.as_mut() {
         auth.decode_token(&mut id_token)?;
         auth.validate_token(&id_token, None, None)?;
-        eprintln!("token: {:#?}", id_token);
+        //eprintln!("token: {:#?}", id_token);
     } else {
         return Ok(None);
     }

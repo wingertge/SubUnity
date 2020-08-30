@@ -549,6 +549,16 @@ __webpack_require__.r(__webpack_exports__);
 
 
 Object(preact__WEBPACK_IMPORTED_MODULE_0__["render"])(Object(preact__WEBPACK_IMPORTED_MODULE_0__["h"])(_components_app__WEBPACK_IMPORTED_MODULE_1__["default"], null), document.body);
+var root;
+
+var init = function init() {
+  var App = __webpack_require__(/*! ./components/app */ "./src/components/app.js")["default"];
+
+  root = Object(preact__WEBPACK_IMPORTED_MODULE_0__["render"])(Object(preact__WEBPACK_IMPORTED_MODULE_0__["h"])(App, null), document.body, root);
+};
+
+init();
+if (false) {}
 
 /***/ })
 

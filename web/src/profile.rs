@@ -1,12 +1,15 @@
-use crate::authentication::{User, unauthorized_redirect};
-use rocket::response::Redirect;
-use crate::{template, Template};
-use crate::templates::profile_html;
-use rocket::http::CookieJar;
+use crate::{
+    authentication::unauthorized_redirect,
+    template,
+    templates::profile_html,
+    Template
+};
+use rocket::{http::CookieJar, response::Redirect};
+use crate::authentication::CurrentUser;
 
 #[get("/profile")]
-pub async fn profile(user: User) -> Template {
-    template(|w| profile_html(w, user, ""))
+pub async fn profile(user: CurrentUser) -> Template {
+    template(|w| profile_html(w, &user, ""))
 }
 
 #[get("/profile", rank = 2)]
