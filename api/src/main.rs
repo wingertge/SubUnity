@@ -23,6 +23,7 @@ use tonic::{metadata::MetadataValue, transport::Server, Request, Status};
 mod db;
 mod settings;
 mod user;
+mod subtitles;
 
 trait IntoStatus<T> {
     fn into_status(self) -> Result<T, Status>;

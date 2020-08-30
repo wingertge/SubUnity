@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package subtitles;
+
+service VideoSubs {
+  rpc SetSubtitles(Subtitles) returns (SetSubtitleResponse);
+}
+
+message Subtitles {
+  message Entry {
+    uint64 startMillis = 1;
+    uint64 endMillis = 2;
+    string text = 3;
+  }
+  repeated Entry entries = 1;
+  string videoId = 2;
+  string language = 3;
+}
+
+message SetSubtitleResponse {}
