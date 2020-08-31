@@ -2,6 +2,8 @@
 extern crate async_trait;
 #[macro_use]
 extern crate diesel;
+#[macro_use]
+extern crate diesel_migrations;
 
 use crate::{
     settings::{Authentication, Settings},
@@ -75,6 +77,8 @@ impl State {
 type Database = Pool<ConnectionManager<SqliteConnection>>;
 type DbConnection = PooledConnection<ConnectionManager<SqliteConnection>>;
 
+embed_migrations!("migrations");
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     dotenv::dotenv().ok();
@@ -111,6 +115,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let manager = ConnectionManager::<SqliteConnection>::new(database_url);
     let pool = Pool::builder().build(manager)?;
+
+    {
+        let conn = pool.get().unwrap();
+        embedded_migrations::run(&conn).unwrap();
+    }
+
     let state = Arc::new(State {
         db: pool,
         conf: settings

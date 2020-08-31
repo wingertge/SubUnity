@@ -16,6 +16,7 @@ futures = "0.3"
 async-trait = "0.1"
 api-types = { path = "types" }
 diesel = { version = "1.4", features = ["sqlite", "r2d2", "chrono"] }
+diesel_migrations = "1.4"
 dotenv = "0.15"
 openid = "0.4"
 serde = { version = "1", features = ["derive"] }
