@@ -8,8 +8,8 @@ service VideoSubs {
 
 message Subtitles {
   message Entry {
-    uint64 startMillis = 1;
-    uint64 endMillis = 2;
+    float startSeconds = 1;
+    float endSeconds = 2;
     string text = 3;
   }
   repeated Entry entries = 1;

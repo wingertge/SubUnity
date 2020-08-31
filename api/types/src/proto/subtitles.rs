@@ -10,10 +10,10 @@ pub struct Subtitles {
 pub mod subtitles {
     #[derive(Clone, PartialEq, ::prost::Message, Serialize, Deserialize)]
     pub struct Entry {
-        #[prost(uint64, tag = "1")]
-        pub start_millis: u64,
-        #[prost(uint64, tag = "2")]
-        pub end_millis: u64,
+        #[prost(float, tag = "1")]
+        pub start_seconds: f32,
+        #[prost(float, tag = "2")]
+        pub end_seconds: f32,
         #[prost(string, tag = "3")]
         pub text: std::string::String,
     }

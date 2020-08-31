@@ -54,7 +54,7 @@ fn init_user(claims: Claims, conn: &SqliteConnection) -> QueryResult<models::Use
         .ok_or_else(|| diesel::NotFound)
 }
 
-fn get_user<T>(request: &Request<T>, conn: &SqliteConnection) -> Result<models::User, Status> {
+pub fn get_user<T>(request: &Request<T>, conn: &SqliteConnection) -> Result<models::User, Status> {
     use crate::db::{models::User, schema::users::dsl::*};
 
     let user = request

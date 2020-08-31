@@ -15,7 +15,7 @@ tokio = { version = "0.2", features = ["stream", "macros"] }
 futures = "0.3"
 async-trait = "0.1"
 api-types = { path = "types" }
-diesel = { version = "1.4", features = ["sqlite", "r2d2"] }
+diesel = { version = "1.4", features = ["sqlite", "r2d2", "chrono"] }
 dotenv = "0.15"
 openid = "0.4"
 serde = { version = "1", features = ["derive"] }
@@ -26,3 +26,4 @@ image = "0.23"
 azure_sdk_storage_blob = { version = "0.45", optional = true }
 azure_sdk_storage_core = { version = "0.44", optional = true }
 uuid = { version = "0.8", features = ["v4"] }
+chrono = "0.4"
