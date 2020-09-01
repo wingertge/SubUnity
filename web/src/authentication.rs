@@ -18,6 +18,7 @@ use tonic::{
 use std::collections::BTreeMap;
 use parking_lot::RwLock;
 use std::ops::Deref;
+use api_types::subtitles::video_subs_client::VideoSubsClient;
 
 const ACCESS_TOKEN_NAME: &str = "__auth_access__";
 const ID_TOKEN_NAME: &str = "__auth_identity__";
@@ -214,6 +215,13 @@ pub struct AuthenticatedApiConn<'r> {
     token: MetadataValue<Ascii>
 }
 
+fn interceptor(token: MetadataValue<Ascii>) -> impl Into<tonic::Interceptor> {
+    move |mut req: tonic::Request<()>| {
+        req.metadata_mut().insert("authorization", token.clone());
+        Ok(req)
+    }
+}
+
 impl<'r> AuthenticatedApiConn<'r> {
     pub fn from_parts(inner: &'r Channel, token: &AuthToken) -> Self {
         Self {
@@ -223,13 +231,16 @@ impl<'r> AuthenticatedApiConn<'r> {
     }
 
     pub fn user(&self) -> UserServiceClient<Channel> {
-        let token = self.token.clone();
         UserServiceClient::with_interceptor(
             self.inner.clone(),
-            move |mut req: tonic::Request<()>| {
-                req.metadata_mut().insert("authorization", token.clone());
-                Ok(req)
-            }
+            interceptor(self.token.clone())
+        )
+    }
+
+    pub fn subtitles(&self) -> VideoSubsClient<Channel> {
+        VideoSubsClient::with_interceptor(
+            self.inner.clone(),
+            interceptor(self.token.clone())
         )
     }
 }

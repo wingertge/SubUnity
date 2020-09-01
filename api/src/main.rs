@@ -21,11 +21,14 @@ use r2d2::PooledConnection;
 use serde::{Deserialize, Serialize};
 use std::{env, error::Error, sync::Arc};
 use tonic::{metadata::MetadataValue, transport::Server, Request, Status};
+use api_types::subtitles::video_subs_server::VideoSubsServer;
+use crate::subtitles::VideoSubService;
 
 mod db;
 mod settings;
 mod user;
 mod subtitles;
+mod youtube_caption_scraper;
 
 trait IntoStatus<T> {
     fn into_status(self) -> Result<T, Status>;
@@ -101,16 +104,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 },
             ..
         } = &settings;
-
-        Client::discover(
+        let client = Client::discover(
             client_id.to_string(),
             client_secret.to_string(),
             None,
             issuer.parse()?
-        )
-    }
-    .await
-    .unwrap();
+        ).await.unwrap();
+
+        Arc::new(client)
+    };
 
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let manager = ConnectionManager::<SqliteConnection>::new(database_url);
@@ -127,9 +129,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
     });
 
     let addr = "[::1]:50051".parse().unwrap();
-    let user = UserServiceServer::with_interceptor(UserService(state.clone()), authorize(auth));
+    let user = UserServiceServer::with_interceptor(UserService(state.clone()), authorize(auth.clone()));
+    let subtitles = VideoSubsServer::with_interceptor(VideoSubService(state.clone()), authorize(auth.clone()));
     println!("Server listening on {}", addr);
-    Server::builder().add_service(user).serve(addr).await?;
+    Server::builder()
+        .add_service(user)
+        .add_service(subtitles)
+        .serve(addr).await?;
     Ok(())
 }
 
@@ -231,7 +237,7 @@ impl openid::Claims for Claims {
 impl CompactJson for Claims {}
 
 fn authorize(
-    client: Client<Discovered, Claims>
+    client: Arc<Client<Discovered, Claims>>
 ) -> impl Fn(Request<()>) -> Result<Request<()>, Status> {
     move |mut req| {
         if let Some(token) = req.metadata().get("authorization") {

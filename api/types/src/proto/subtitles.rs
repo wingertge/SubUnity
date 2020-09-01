@@ -1,4 +1,11 @@
 #[derive(Clone, PartialEq, ::prost::Message, Serialize, Deserialize)]
+pub struct SubtitleId {
+    #[prost(string, tag = "1")]
+    pub video_id: std::string::String,
+    #[prost(string, tag = "2")]
+    pub language: std::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message, Serialize, Deserialize)]
 pub struct Subtitles {
     #[prost(message, repeated, tag = "1")]
     pub entries: ::std::vec::Vec<subtitles::Entry>,
@@ -67,6 +74,20 @@ pub mod video_subs_client {
             let path = http::uri::PathAndQuery::from_static("/subtitles.VideoSubs/SetSubtitles");
             self.inner.unary(request.into_request(), path, codec).await
         }
+        pub async fn get_subtitles(
+            &mut self,
+            request: impl tonic::IntoRequest<super::SubtitleId>,
+        ) -> Result<tonic::Response<super::Subtitles>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static("/subtitles.VideoSubs/GetSubtitles");
+            self.inner.unary(request.into_request(), path, codec).await
+        }
     }
     impl<T: Clone> Clone for VideoSubsClient<T> {
         fn clone(&self) -> Self {
@@ -92,6 +113,10 @@ pub mod video_subs_server {
             &self,
             request: tonic::Request<super::Subtitles>,
         ) -> Result<tonic::Response<super::SetSubtitleResponse>, tonic::Status>;
+        async fn get_subtitles(
+            &self,
+            request: tonic::Request<super::SubtitleId>,
+        ) -> Result<tonic::Response<super::Subtitles>, tonic::Status>;
     }
     #[derive(Debug)]
     pub struct VideoSubsServer<T: VideoSubs> {
@@ -145,6 +170,37 @@ pub mod video_subs_server {
                         let interceptor = inner.1.clone();
                         let inner = inner.0;
                         let method = SetSubtitlesSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/subtitles.VideoSubs/GetSubtitles" => {
+                    #[allow(non_camel_case_types)]
+                    struct GetSubtitlesSvc<T: VideoSubs>(pub Arc<T>);
+                    impl<T: VideoSubs> tonic::server::UnaryService<super::SubtitleId> for GetSubtitlesSvc<T> {
+                        type Response = super::Subtitles;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::SubtitleId>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).get_subtitles(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1.clone();
+                        let inner = inner.0;
+                        let method = GetSubtitlesSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = if let Some(interceptor) = interceptor {
                             tonic::server::Grpc::with_interceptor(codec, interceptor)

@@ -27,4 +27,4 @@ ructe = { git = "https://github.com/wingertge/ructe.git" }
 git = "https://github.com/SergioBenitez/Rocket.git"
 # rev = "45b4436ed3a7ab913d96c2b69ee4df7fd8c0c618"
 default-features = false
-features = ["helmet", "serve"]
+features = ["helmet", "serve", "json"]

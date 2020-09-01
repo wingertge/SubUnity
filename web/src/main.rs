@@ -20,11 +20,13 @@ use std::{error::Error, io, path::PathBuf};
 use tonic::transport::Channel;
 pub use api_types::user::User;
 use crate::authentication::UserCache;
+use api_types::subtitles::video_subs_client::VideoSubsClient;
 
 mod authentication;
 mod profile;
 mod settings;
 mod templates;
+mod subtitles;
 
 type Template = Html<Vec<u8>>;
 pub type API<'a> = State<'a, ApiConn>;
@@ -68,6 +70,9 @@ pub struct ApiConn(pub Channel);
 impl ApiConn {
     pub fn user(&self) -> UserServiceClient<Channel> {
         UserServiceClient::new(self.0.clone())
+    }
+    pub fn subtitles(&self) -> VideoSubsClient<Channel> {
+        VideoSubsClient::new(self.0.clone())
     }
 }
 
@@ -124,6 +129,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 edit
             ]
         )
+        .mount("/subtitles", routes![subtitles::get_subtitles, subtitles::set_subtitles])
         .mount("/js", StaticFiles::from("./js/build"))
         .launch()
         .await?;
