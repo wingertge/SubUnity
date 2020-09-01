@@ -1,9 +1,11 @@
 #[derive(Clone, PartialEq, ::prost::Message, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UserIdentity {
     #[prost(string, tag = "1")]
     pub sub: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct User {
     #[prost(string, tag = "1")]
     pub id: std::string::String,
@@ -13,16 +15,19 @@ pub struct User {
     pub email: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SayRequest {
     #[prost(string, tag = "1")]
     pub name: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SayResponse {
     #[prost(string, tag = "1")]
     pub message: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ImageUploadRequest {
     #[prost(string, tag = "1")]
     pub file: std::string::String,
@@ -47,6 +52,7 @@ pub struct ImageUploadRequest {
 /// You can find out more about this error model and how to work with it in the
 /// [API Design Guide](https://cloud.google.com/apis/design/errors).
 #[derive(Clone, PartialEq, ::prost::Message, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Status {
     /// The status code, which should be an enum value of [google.rpc.Code][google.rpc.Code].
     #[prost(int32, tag = "1")]

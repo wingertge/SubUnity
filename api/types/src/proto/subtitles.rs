@@ -1,4 +1,5 @@
 #[derive(Clone, PartialEq, ::prost::Message, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SubtitleId {
     #[prost(string, tag = "1")]
     pub video_id: std::string::String,
@@ -6,6 +7,7 @@ pub struct SubtitleId {
     pub language: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Subtitles {
     #[prost(message, repeated, tag = "1")]
     pub entries: ::std::vec::Vec<subtitles::Entry>,
@@ -16,6 +18,7 @@ pub struct Subtitles {
 }
 pub mod subtitles {
     #[derive(Clone, PartialEq, ::prost::Message, Serialize, Deserialize)]
+    #[serde(rename_all = "camelCase")]
     pub struct Entry {
         #[prost(float, tag = "1")]
         pub start_seconds: f32,
@@ -26,6 +29,7 @@ pub mod subtitles {
     }
 }
 #[derive(Clone, PartialEq, ::prost::Message, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SetSubtitleResponse {}
 #[doc = r" Generated client implementations."]
 pub mod video_subs_client {
