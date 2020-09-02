@@ -16,7 +16,7 @@ use rocket::{
     State
 };
 use rocket_contrib::{helmet::SpaceHelmet, serve::StaticFiles};
-use std::{error::Error, io, path::PathBuf};
+use std::{error::Error, io, path::PathBuf, env};
 use tonic::transport::Channel;
 pub use api_types::user::User;
 use crate::authentication::UserCache;
@@ -131,6 +131,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         )
         .mount("/subtitles", routes![subtitles::get_subtitles, subtitles::set_subtitles])
         .mount("/js", StaticFiles::from("./js/build"))
+        .mount("/asset", StaticFiles::from("./assets"))
         .launch()
         .await?;
 
