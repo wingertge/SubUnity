@@ -1,5 +1,5 @@
-const { Component } = require("preact")
-const YTPlayer = require("yt-player")
+import { h, Component } from "preact"
+import YTPlayer from "yt-player"
 
 export default class YouTubePlayer extends Component {
   static get defaultProps() {

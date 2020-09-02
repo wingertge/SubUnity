@@ -1,3 +1,4 @@
+import { h } from "preact"
 import YouTubePlayer from "./YouTubePlayer"
 
 import "../styles/player.css"

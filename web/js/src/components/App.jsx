@@ -1,3 +1,4 @@
+import { h } from "preact"
 import { useState, useEffect } from "preact/hooks"
 
 import Player from "./Player"
@@ -10,26 +11,8 @@ export default function App() {
   let [currentTime, setCurrentTime] = useState(0)
 
   /**
-   * Parse an SRT caption file into a JSON object, adding some
-   * useful extra properties so that it works better with the
-   * YouTube player, and then set the `captions` state to
-   * the returned object.
-   *
-   * @param {string} captions
-   */
-  // function parseCaptions(captions) {
-  //   let parsedCaptions = parse(captions).map((caption, index) => ({
-  //     id: index,
-  //     ...caption,
-  //     startInSeconds: Number((caption.start * 0.001).toFixed(3)),
-  //     endInSeconds: Number((caption.end * 0.001).toFixed(3)),
-  //   }))
-
-  //   setCaptions(parsedCaptions)
-  // }
-
-  /**
    * @todo Document this function
+   * @todo Allow more than just caption text to be updated
    * @param {number} id
    * @param {string} content
    */
@@ -49,8 +32,7 @@ export default function App() {
   function updateActiveCaption(currentTime) {
     let currentCaption = captions.filter(
       caption =>
-        currentTime > caption.startInSeconds &&
-        currentTime < caption.endInSeconds
+        currentTime > caption.startSeconds && currentTime < caption.endSeconds
     )
 
     // Only update the active caption if there are any
@@ -71,10 +53,10 @@ export default function App() {
    */
   async function fetchCaptions(url) {
     try {
-      const response = await fetch(url, { method: "GET" })
-      const text = await response.json()
+      let response = await fetch(url, { method: "GET", mode: "no-cors" })
+      let captionsJSON = await response.json()
 
-      setCaptions(text)
+      setCaptions(captionsJSON.entries)
     } catch (error) {
       return console.error("Error fetching captions:", error)
     }

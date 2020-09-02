@@ -1,18 +1,13 @@
+import { h } from "preact"
+
 export default function Caption(props) {
-  let {
-    id,
-    startInSeconds,
-    endInSeconds,
-    text,
-    updateCaption,
-    isActive,
-  } = props
+  let { id, startSeconds, endSeconds, text, updateCaption, isActive } = props
 
   return (
     <div class={isActive ? "caption caption-highlighted" : "caption"}>
       <div class="timestamps">
-        <input type="text" class="startTimestamp" value={startInSeconds} />
-        <input type="text" class="endTimeStamp" value={endInSeconds} />
+        <input type="text" class="startTimestamp" value={startSeconds} />
+        <input type="text" class="endTimeStamp" value={endSeconds} />
       </div>
 
       <textarea

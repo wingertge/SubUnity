@@ -1,3 +1,4 @@
+import { h } from "preact"
 import Caption from "./Caption"
 
 import "../styles/captions.css"
