@@ -1,0 +1,7 @@
+{
+  "extends": "@snowpack/app-scripts-preact",
+  "plugins": [],
+  "installOptions": {
+    "polyfillNode": true
+  }
+}
