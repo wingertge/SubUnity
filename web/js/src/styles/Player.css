@@ -1,0 +1,15 @@
+.player {
+  margin-right: 10px;
+  width: 1024px;
+}
+
+.active-caption {
+  background: black;
+  color: white;
+  font-size: 24px;
+  padding: 5px;
+  text-align: center;
+  width: 70%;
+  word-wrap: break-word;
+  margin: 10px auto;
+}
