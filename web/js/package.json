@@ -2,14 +2,18 @@
   "name": "js",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "snowpack dev",
+    "build": "snowpack build"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "preact": "^10.4.8",
     "yt-player": "^3.4.3"
+  },
+  "devDependencies": {
+    "@snowpack/app-scripts-preact": "^1.8.5",
+    "snowpack": "^2.10.0"
   }
 }
