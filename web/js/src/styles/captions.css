@@ -1,0 +1,87 @@
+.captions-list {
+  height: 800px;
+  min-height: 350px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* TODO: Make sure this is cross-browser compatible */
+.captions-list::-webkit-scrollbar {
+  -webkit-appearance: none;
+  width: 6px;
+}
+
+.captions-list::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 1px rgba(255, 255, 255, 0.5);
+}
+
+.captions-list::-webkit-scrollbar-thumb:hover {
+  background: black;
+}
+
+.caption {
+  display: flex;
+  border-bottom: 1px solid #aaa;
+  padding: 10px 5px;
+}
+
+.caption:hover {
+  background: #f8f8f8;
+}
+
+.caption-highlighted {
+  color: #ddd;
+  border-left: 2px solid red;
+}
+
+.timestamps,
+.caption-textbox {
+  margin-top: 5px;
+}
+
+.timestamps {
+  width: 90px;
+}
+
+.timestamps input {
+  width: 70px;
+  color: #888;
+}
+
+.caption input,
+.caption-textbox {
+  border: none;
+  line-height: 13px;
+  font-size: 14px;
+  resize: none;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+.timestamps input {
+  text-align: right;
+}
+
+.caption-textbox {
+  color: black;
+  font-size: 13px;
+  width: 250px;
+  min-height: 47px;
+  margin: 2px 0 10px;
+  padding: 4px;
+  line-height: 1.4;
+}
+
+.caption input,
+.caption-textbox {
+  background: transparent;
+}
+
+.caption input:focus,
+.caption-textbox:focus {
+  background: white;
+  color: black;
+  outline: 1px solid #ddd;
+  box-shadow: none;
+}
