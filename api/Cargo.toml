@@ -30,6 +30,8 @@ reqwest = "0.10"
 urldecode = "0.1"
 regex = "1"
 htmlescape = "0.3"
+subparse = "0.6"
+async-stream = "0.3"
 
 azure_sdk_storage_blob = { version = "0.45", optional = true }
 azure_sdk_storage_core = { version = "0.44", optional = true }

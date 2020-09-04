@@ -7,3 +7,10 @@ extern crate serde;
 mod proto;
 
 pub use proto::*;
+use crate::proto::subtitles::Chunk;
+
+impl AsRef<[u8]> for Chunk {
+    fn as_ref(&self) -> &[u8] {
+        &self.content
+    }
+}

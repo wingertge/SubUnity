@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 rocket = { git = "https://github.com/SergioBenitez/Rocket.git" }
 tokio = { version = "0.2", features = ["macros"] }
+tokio-util = { version = "0.3", features = ["compat"] }
 api-types = { path = "../api/types" }
 tonic = { version = "0.3", features = ["tls"] }
 config = "0.10"

@@ -1,5 +1,30 @@
 #[derive(Clone, PartialEq, ::prost::Message, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct DownloadRequest {
+    #[prost(string, tag = "1")]
+    pub video_id: std::string::String,
+    #[prost(string, tag = "2")]
+    pub language: std::string::String,
+    #[prost(enumeration = "download_request::Format", tag = "3")]
+    pub format: i32,
+}
+pub mod download_request {
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+    #[repr(i32)]
+    #[derive(Serialize, Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    pub enum Format {
+        Srt = 0,
+    }
+}
+#[derive(Clone, PartialEq, ::prost::Message, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Chunk {
+    #[prost(bytes, tag = "1")]
+    pub content: std::vec::Vec<u8>,
+}
+#[derive(Clone, PartialEq, ::prost::Message, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SubtitleId {
     #[prost(string, tag = "1")]
     pub video_id: std::string::String,
@@ -92,6 +117,23 @@ pub mod video_subs_client {
             let path = http::uri::PathAndQuery::from_static("/subtitles.VideoSubs/GetSubtitles");
             self.inner.unary(request.into_request(), path, codec).await
         }
+        pub async fn download_subtitles(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DownloadRequest>,
+        ) -> Result<tonic::Response<tonic::codec::Streaming<super::Chunk>>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path =
+                http::uri::PathAndQuery::from_static("/subtitles.VideoSubs/DownloadSubtitles");
+            self.inner
+                .server_streaming(request.into_request(), path, codec)
+                .await
+        }
     }
     impl<T: Clone> Clone for VideoSubsClient<T> {
         fn clone(&self) -> Self {
@@ -121,6 +163,15 @@ pub mod video_subs_server {
             &self,
             request: tonic::Request<super::SubtitleId>,
         ) -> Result<tonic::Response<super::Subtitles>, tonic::Status>;
+        #[doc = "Server streaming response type for the DownloadSubtitles method."]
+        type DownloadSubtitlesStream: Stream<Item = Result<super::Chunk, tonic::Status>>
+            + Send
+            + Sync
+            + 'static;
+        async fn download_subtitles(
+            &self,
+            request: tonic::Request<super::DownloadRequest>,
+        ) -> Result<tonic::Response<Self::DownloadSubtitlesStream>, tonic::Status>;
     }
     #[derive(Debug)]
     pub struct VideoSubsServer<T: VideoSubs> {
@@ -212,6 +263,41 @@ pub mod video_subs_server {
                             tonic::server::Grpc::new(codec)
                         };
                         let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/subtitles.VideoSubs/DownloadSubtitles" => {
+                    #[allow(non_camel_case_types)]
+                    struct DownloadSubtitlesSvc<T: VideoSubs>(pub Arc<T>);
+                    impl<T: VideoSubs> tonic::server::ServerStreamingService<super::DownloadRequest>
+                        for DownloadSubtitlesSvc<T>
+                    {
+                        type Response = super::Chunk;
+                        type ResponseStream = T::DownloadSubtitlesStream;
+                        type Future =
+                            BoxFuture<tonic::Response<Self::ResponseStream>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::DownloadRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).download_subtitles(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1;
+                        let inner = inner.0;
+                        let method = DownloadSubtitlesSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.server_streaming(method, req).await;
                         Ok(res)
                     };
                     Box::pin(fut)

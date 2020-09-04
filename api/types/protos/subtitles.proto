@@ -5,6 +5,20 @@ package subtitles;
 service VideoSubs {
   rpc SetSubtitles(Subtitles) returns (SetSubtitleResponse);
   rpc GetSubtitles(SubtitleId) returns (Subtitles);
+  rpc DownloadSubtitles(DownloadRequest) returns (stream Chunk);
+}
+
+message DownloadRequest {
+  string videoId = 1;
+  string language = 2;
+  enum Format {
+    Srt = 0;
+  }
+  Format format = 3;
+}
+
+message Chunk {
+  bytes content = 1;
 }
 
 message SubtitleId {
