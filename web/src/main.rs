@@ -78,6 +78,10 @@ impl ApiConn {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    if env::var("ROCKET_ENV").is_err() {
+        env::set_var("ROCKET_ENV", "development");
+    }
+
     let mut config = Config::default();
     config
         .merge(config::File::with_name("Config").required(false))?
@@ -129,8 +133,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 edit
             ]
         )
-        .mount("/subtitles", routes![subtitles::get_subtitles, subtitles::set_subtitles])
-        .mount("/js", StaticFiles::from("./js/build"))
+        .mount("/subtitles", routes![
+            subtitles::get_subtitles,
+            subtitles::set_subtitles,
+            subtitles::download_subtitles
+        ])
+        .mount("/js", StaticFiles::from("./js"))
         .mount("/asset", StaticFiles::from("./assets"))
         .launch()
         .await?;

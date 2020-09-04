@@ -1,6 +1,6 @@
 use api_types::subtitles::video_subs_server::VideoSubs;
 use tonic::{Status, Response, Request};
-use api_types::subtitles::{Subtitles, SetSubtitleResponse, SubtitleId};
+use api_types::subtitles::{Subtitles, SetSubtitleResponse, SubtitleId, DownloadRequest, Chunk};
 use diesel::{RunQueryDsl, QueryDsl};
 use crate::{State, IntoStatus, DbConnection, youtube_caption_scraper};
 use std::ops::Deref;
@@ -13,6 +13,14 @@ use crate::user::get_user;
 use serde::{Serialize, Deserialize};
 use diesel::ExpressionMethods;
 use std::sync::Arc;
+use futures::Stream;
+use std::pin::Pin;
+use api_types::subtitles::download_request::Format;
+use subparse::{SrtFile, SubtitleFileInterface};
+use subparse::timetypes::{TimePoint, TimeSpan};
+use std::io::{Cursor, Read};
+use prost::bytes::Buf;
+use std::mem;
 
 pub struct VideoSubService(pub Arc<State>);
 
@@ -129,5 +137,44 @@ impl VideoSubs for VideoSubService {
             video_id: subs.video_id,
             language: subs.language
         }))
+    }
+
+    type DownloadSubtitlesStream = Pin<Box<dyn Stream<Item = Result<Chunk, Status>> + Send + Sync + 'static>>;
+
+    async fn download_subtitles(&self, request: Request<DownloadRequest>) -> Result<Response<Self::DownloadSubtitlesStream>, Status> {
+        let req = request.into_inner();
+
+        let conn = self.db()?;
+        let subs = get_or_init_subtitles(conn, &req.video_id, &req.language).await?;
+        let entries: Vec<Entry> = serde_json::from_str(&subs.subs_json).unwrap();
+        let format = Format::from_i32(req.format);
+
+        let out = match format {
+            Format::Srt => {
+                let entries = entries.into_iter()
+                    .map(|entry| {
+                        let start = TimePoint::from_msecs((entry.start_seconds * 1000.) as i64);
+                        let end = TimePoint::from_msecs((entry.end_seconds * 1000.) as i64);
+                        let span = TimeSpan::new(start, end);
+                        (span, entry.text)
+                    })
+                    .collect();
+                let srt = SrtFile::create(entries).unwrap();
+                let mut data = Cursor::new(srt.to_data().unwrap());
+                let out = async_stream::try_stream! {
+                    while data.has_remaining() {
+                        let mut buf = vec![0; 1024];
+                        let n = data.read(&mut buf).unwrap();
+                        buf.truncate(n);
+                        yield Chunk {
+                            content: buf
+                        }
+                    }
+                };
+                out
+            }
+        };
+
+        Ok(Response::new(Box::pin(out) as Self::DownloadSubtitlesStream))
     }
 }
