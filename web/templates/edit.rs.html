@@ -2,13 +2,17 @@
 
 <html lang="en">
     <head>
-        <title>Hello World!</title>
-        <script id="js-init">
-            window.VIDEO_ID = "@video_id"
-            document.getElementById("js-init").remove()
-        </script>
+        <title>Subtitle Editor</title>
+        <meta charset="utf-8" />
     </head>
     <body>
-        <script src="/js/bundle.js" async></script>
+        <div id="root"></div>
+        <script>window.VIDEO_ID = "@video_id"</script>
+        @if std::env::var("ROCKET_ENV").map(|env| env == "development").unwrap() {
+            <script type="module" src="http://localhost:8080/_dist_/index.js"></script>
+            <script>window.HMR_WEBSOCKET_URL = "ws://localhost:8080"</script>
+        } else {
+            <script type="module" src="/js/build/__dist__/index.js"></script>
+        }
     </body>
 </html>

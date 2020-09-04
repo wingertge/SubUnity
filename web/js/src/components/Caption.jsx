@@ -15,7 +15,7 @@ export default function Caption(props) {
         name="editable_text"
         value={text}
         rows="3"
-        onInput={event => updateCaption(id, event.target.value)}
+        onInput={event => updateCaption(id, "text", event.target.value)}
       />
     </div>
   )
