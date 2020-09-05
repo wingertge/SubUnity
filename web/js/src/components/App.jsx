@@ -5,20 +5,23 @@ import Player from "./Player"
 import CaptionList from "./CaptionList"
 
 export default function App() {
-  let [videoID, setVideoID] = useState("9mSpciMOvHU")
+  let [videoID, setVideoID] = useState("")
+  let [error, setError] = useState("")
   let [captions, setCaptions] = useState([])
   let [activeCaption, setActiveCaption] = useState({})
   let [currentTime, setCurrentTime] = useState(0)
 
   /**
-   * @todo Document this function
-   * @todo Allow more than just caption text to be updated
+   * Update a specific caption field
+   *
+   * @todo Populate change to API
    * @param {number} id
+   * @param {string} field
    * @param {string} content
    */
-  function updateCaption(id, content) {
+  function updateCaption(id, field, content) {
     let payload = [...captions]
-    payload[id]["text"] = content
+    payload[id][field] = content
 
     setCaptions(payload)
   }
@@ -43,29 +46,43 @@ export default function App() {
   }
 
   /**
-   * Fetch an arbitrary URL and attempt to parse it, if there's
-   * any error, log it to the console.
+   * Fetch captions from the API
    *
    * @todo Better error handling if this step fails
    * @todo Allow users to import SRT files from their desktop
    *
-   * @param {string} url
+   * @param {string} id
+   * @param {string} language
    */
-  async function fetchCaptions(url) {
+  async function fetchCaptions(id, language) {
     try {
-      let response = await fetch(url, { method: "GET", mode: "no-cors" })
-      let captionsJSON = await response.json()
+      let response = await fetch(`/subtitles/${id}?lang=${language}`, {
+        method: "GET",
+      })
+      let results = await response.json()
 
-      setCaptions(captionsJSON.entries)
+      let fetchedCaptions = results.entries.map((caption, index) => ({
+        id: index,
+        ...caption,
+      }))
+
+      setCaptions(fetchedCaptions)
     } catch (error) {
+      setError("Error fetching captions")
       return console.error("Error fetching captions:", error)
     }
   }
 
-  useEffect(
-    () => fetchCaptions(`http://localhost:8000/subtitles/${videoID}?lang=en`),
-    []
-  )
+  useEffect(() => {
+    let VIDEO_ID = window.location.pathname.split("/")[2]
+
+    setVideoID(VIDEO_ID)
+    fetchCaptions(VIDEO_ID, "en")
+  }, [])
+
+  if (error) {
+    return <div class="error">{error}</div>
+  }
 
   return (
     <div class="app">
