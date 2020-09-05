@@ -20,7 +20,6 @@ use subparse::{SrtFile, SubtitleFileInterface};
 use subparse::timetypes::{TimePoint, TimeSpan};
 use std::io::{Cursor, Read};
 use prost::bytes::Buf;
-use std::mem;
 
 pub struct VideoSubService(pub Arc<State>);
 
@@ -147,7 +146,7 @@ impl VideoSubs for VideoSubService {
         let conn = self.db()?;
         let subs = get_or_init_subtitles(conn, &req.video_id, &req.language).await?;
         let entries: Vec<Entry> = serde_json::from_str(&subs.subs_json).unwrap();
-        let format = Format::from_i32(req.format);
+        let format = Format::from_i32(req.format).unwrap();
 
         let out = match format {
             Format::Srt => {
