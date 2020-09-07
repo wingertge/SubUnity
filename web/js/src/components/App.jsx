@@ -9,7 +9,6 @@ export default function App() {
   let [error, setError] = useState("")
   let [captions, setCaptions] = useState([])
   let [activeCaption, setActiveCaption] = useState({})
-  let [currentTime, setCurrentTime] = useState(0)
 
   /**
    * Update a specific caption field
@@ -31,18 +30,27 @@ export default function App() {
    * as the active caption.
    *
    * @param {number} currentTime Seconds since video started
+   * @param {boolean} manuallySelected Caption was selected by a user
    */
-  function updateActiveCaption(currentTime) {
+  function updateActiveCaption(currentTime, manuallySelected) {
     let currentCaption = captions.filter(
       caption =>
         currentTime > caption.startSeconds && currentTime < caption.endSeconds
     )
+
+    if (manuallySelected) {
+      currentCaption[0].manuallySelected = true
+    }
 
     // Only update the active caption if there are any
     // matching captions, otherwise this will throw an error.
     if (currentCaption.length !== 0) {
       setActiveCaption(currentCaption[0])
     }
+  }
+
+  function captionSelected(id, startTime) {
+    updateActiveCaption(startTime, true)
   }
 
   /**
@@ -64,6 +72,7 @@ export default function App() {
       let fetchedCaptions = results.entries.map((caption, index) => ({
         id: index,
         ...caption,
+        manuallySelected: false,
       }))
 
       setCaptions(fetchedCaptions)
@@ -91,7 +100,7 @@ export default function App() {
         activeCaption={activeCaption}
         updateActiveCaption={updateActiveCaption}
         updateCaption={updateCaption}
-        currentTime={currentTime}
+        captionSelected={captionSelected}
       />
 
       <Player
@@ -99,7 +108,6 @@ export default function App() {
         captions={captions}
         activeCaption={activeCaption}
         updateActiveCaption={updateActiveCaption}
-        currentTime={currentTime}
       />
     </div>
   )

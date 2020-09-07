@@ -10,6 +10,7 @@ export default function CaptionList(props) {
         <Caption
           key={caption.id}
           updateCaption={props.updateCaption}
+          captionSelected={props.captionSelected}
           isActive={props.activeCaption.id === caption.id}
           {...caption}
         />
