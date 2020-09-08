@@ -1,4 +1,6 @@
 import { h } from "preact"
+
+import Header from "./Header"
 import YouTubePlayer from "./YouTubePlayer"
 
 import "../styles/player.css"
@@ -9,6 +11,8 @@ export default function Player(props) {
 
   return (
     <div class="player">
+      <Header />
+
       <YouTubePlayer
         width="1024px"
         height="576px"

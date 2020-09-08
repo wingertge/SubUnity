@@ -1,0 +1,14 @@
+import { h } from "preact"
+
+export default function Header(props) {
+  return (
+    <div class="header">
+      <div class="video-title">Video Title</div>
+      <div class="actions">
+        <button>Save</button>
+        <button>Import</button>
+        <button style={{ marginRight: 0 }}>Export</button>
+      </div>
+    </div>
+  )
+}
