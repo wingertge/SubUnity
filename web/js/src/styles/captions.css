@@ -8,12 +8,12 @@
 /* TODO: Make sure this is cross-browser compatible */
 .captions-list::-webkit-scrollbar {
   -webkit-appearance: none;
-  width: 6px;
+  width: 8px;
 }
 
 .captions-list::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.5);
-  box-shadow: 0 0 1px rgba(255, 255, 255, 0.5);
+  background-color: rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0 1px rgba(255, 255, 255, 0.6);
 }
 
 .captions-list::-webkit-scrollbar-thumb:hover {

@@ -15,14 +15,57 @@ textarea {
     Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
 }
 
-.app {
+.header {
+  border-bottom: 1px solid #ddd;
   display: flex;
-  justify-content: space-around;
+  align-items: center;
+  justify-content: space-between;
+  margin: 15px 10px;
+  padding-bottom: 10px;
+}
+
+.heading {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.heading a {
+  background: #ddd;
+  color: #444;
+  font-size: 14px;
+  border-radius: 5px;
+  padding: 2px;
+  text-decoration: none;
+}
+
+.video-title {
+  padding-left: 12px;
+}
+
+.actions button {
+  background: #ddd;
+  font-weight: bold;
+  color: #444;
+  border-radius: 5px;
+  border: 0;
+  outline: 0;
+  padding: 8px;
+  margin-right: 5px;
+}
+
+.actions button:hover {
+  background: #ccc;
+  cursor: pointer;
+  transition: background-color 0.25s linear;
+}
+
+.editor {
+  display: flex;
+  justify-content: space-evenly;
 }
 
 @media only screen and (min-width: 1920px) {
-  .app {
+  .editor {
     width: 80%;
-    margin: 20px auto;
   }
 }

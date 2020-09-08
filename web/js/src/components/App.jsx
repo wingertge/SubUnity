@@ -1,6 +1,7 @@
 import { h } from "preact"
 import { useState, useEffect } from "preact/hooks"
 
+import Header from "./Header"
 import Player from "./Player"
 import CaptionList from "./CaptionList"
 
@@ -93,9 +94,7 @@ export default function App() {
    */
   async function fetchCaptions(id, language) {
     try {
-      let response = await fetch(`/subtitles/${id}?lang=${language}`, {
-        method: "GET",
-      })
+      let response = await fetch(`/subtitles/${id}?lang=${language}`)
       let results = await response.json()
 
       let fetchedCaptions = results.entries.map((caption, index) => ({
@@ -117,6 +116,22 @@ export default function App() {
     }
   }
 
+  async function saveCaptions() {
+    try {
+      let payload = {
+        entries: [captions.map(caption => ({ startSeconds }))],
+        videoId: videoID,
+        language: "en",
+      }
+      let response = await fetch("/subtitles/", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      })
+    } catch (error) {
+      console.log("Error saving captions", error)
+    }
+  }
+
   useEffect(() => {
     let VIDEO_ID = window.location.pathname.split("/")[2]
 
@@ -130,22 +145,26 @@ export default function App() {
 
   return (
     <div class="app">
-      <CaptionList
-        captions={captions}
-        activeCaption={activeCaption}
-        updateActiveCaption={updateActiveCaption}
-        deleteCaption={deleteCaption}
-        updateCaptionField={updateCaptionField}
-        captionSelected={captionSelected}
-      />
+      <Header />
 
-      <Player
-        videoID={videoID}
-        captions={captions}
-        activeCaption={activeCaption}
-        resetCaptions={resetCaptions}
-        updateActiveCaption={updateActiveCaption}
-      />
+      <div class="editor">
+        <CaptionList
+          captions={captions}
+          activeCaption={activeCaption}
+          updateActiveCaption={updateActiveCaption}
+          deleteCaption={deleteCaption}
+          updateCaptionField={updateCaptionField}
+          captionSelected={captionSelected}
+        />
+
+        <Player
+          videoID={videoID}
+          captions={captions}
+          activeCaption={activeCaption}
+          resetCaptions={resetCaptions}
+          updateActiveCaption={updateActiveCaption}
+        />
+      </div>
     </div>
   )
 }
