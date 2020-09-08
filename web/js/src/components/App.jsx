@@ -18,7 +18,7 @@ export default function App() {
    * @param {string} field
    * @param {string|number} content
    */
-  function updateCaption(id, field, content) {
+  function updateCaptionField(id, field, content) {
     let payload = [...captions]
     payload[id][field] = content
 
@@ -36,6 +36,19 @@ export default function App() {
     }))
 
     setCaptions(allCaptions)
+  }
+
+  function deleteCaption(id) {
+    let confirmation = confirm("Are you sure that you want to delete this?")
+
+    if (confirmation) {
+      if (activeCaption.id === id) {
+        setActiveCaption({})
+      }
+
+      let deletedCaptions = captions.filter(caption => caption.id !== id)
+      setCaptions(deletedCaptions)
+    }
   }
 
   /**
@@ -121,7 +134,8 @@ export default function App() {
         captions={captions}
         activeCaption={activeCaption}
         updateActiveCaption={updateActiveCaption}
-        updateCaption={updateCaption}
+        deleteCaption={deleteCaption}
+        updateCaptionField={updateCaptionField}
         captionSelected={captionSelected}
       />
 

@@ -14,8 +14,12 @@ export default function Caption(props) {
           value={props.startTimestamp}
           onFocus={event => props.captionSelected(props.id)}
           onInput={event => {
-            props.updateCaption(props.id, "startTimestamp", event.target.value)
-            props.updateCaption(
+            props.updateCaptionField(
+              props.id,
+              "startTimestamp",
+              event.target.value
+            )
+            props.updateCaptionField(
               props.id,
               "startSeconds",
               secondify(event.target.value)
@@ -29,8 +33,12 @@ export default function Caption(props) {
           value={props.endTimestamp}
           onFocus={event => props.captionSelected(props.id)}
           onInput={event => {
-            props.updateCaption(props.id, "endTimestamp", event.target.value)
-            props.updateCaption(
+            props.updateCaptionField(
+              props.id,
+              "endTimestamp",
+              event.target.value
+            )
+            props.updateCaptionField(
               props.id,
               "endSeconds",
               secondify(event.target.value)
@@ -46,9 +54,17 @@ export default function Caption(props) {
         rows="3"
         onFocus={event => props.captionSelected(props.id)}
         onInput={event =>
-          props.updateCaption(props.id, "text", event.target.value)
+          props.updateCaptionField(props.id, "text", event.target.value)
         }
       />
+
+      <div
+        class="caption-delete"
+        role="button"
+        onClick={event => props.deleteCaption(props.id)}
+      >
+        &times;
+      </div>
     </div>
   )
 }
