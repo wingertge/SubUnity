@@ -91,7 +91,7 @@ export default function App() {
         startTimestamp: new Date(1000 * caption.startSeconds)
           .toISOString()
           .substring(14, 21),
-        endTimeStamp: new Date(1000 * caption.endSeconds)
+        endTimestamp: new Date(1000 * caption.endSeconds)
           .toISOString()
           .substring(14, 21),
         manuallySelected: false,
