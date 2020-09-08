@@ -1,43 +1,39 @@
 import { h } from "preact"
 
 export default function Caption(props) {
-  let {
-    id,
-    startSeconds,
-    endSeconds,
-    text,
-    captionSelected,
-    updateCaption,
-    isActive,
-  } = props
-
   return (
-    <div class={isActive ? "caption caption-highlighted" : "caption"}>
+    <div class={props.isActive ? "caption caption-highlighted" : "caption"}>
       <div class="timestamps">
         <input
           type="text"
           class="startTimestamp"
-          value={startSeconds}
+          value={props.startTimestamp}
+          onFocus={event => props.captionSelected(props.id)}
           onInput={event =>
-            updateCaption(id, "startSeconds", event.target.value)
+            props.updateCaption(props.id, "startTimestamp", event.target.value)
           }
         />
 
         <input
           type="text"
           class="endTimeStamp"
-          value={endSeconds}
-          onInput={event => updateCaption(id, "endSeconds", event.target.value)}
+          value={props.endTimeStamp}
+          onFocus={event => props.captionSelected(props.id)}
+          onInput={event =>
+            props.updateCaption(props.id, "startTimestamp", event.target.value)
+          }
         />
       </div>
 
       <textarea
         class="caption-textbox"
         name="editable_text"
-        value={text}
+        value={props.text}
         rows="3"
-        onInput={event => updateCaption(id, "text", event.target.value)}
-        onFocus={event => captionSelected(id, startSeconds)}
+        onFocus={event => props.captionSelected(props.id)}
+        onInput={event =>
+          props.updateCaption(props.id, "text", event.target.value)
+        }
       />
     </div>
   )

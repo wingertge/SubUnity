@@ -16,7 +16,7 @@ export default function App() {
    * @todo Populate change to API
    * @param {number} id
    * @param {string} field
-   * @param {string} content
+   * @param {string|number} content
    */
   function updateCaption(id, field, content) {
     let payload = [...captions]
@@ -49,8 +49,11 @@ export default function App() {
     }
   }
 
-  function captionSelected(id, startTime) {
-    updateActiveCaption(startTime, true)
+  function captionSelected(id) {
+    let selectedCaption = captions.filter(caption => caption.id == id)
+    selectedCaption[0].manuallySelected = true
+
+    setActiveCaption(selectedCaption[0])
   }
 
   /**
@@ -72,6 +75,12 @@ export default function App() {
       let fetchedCaptions = results.entries.map((caption, index) => ({
         id: index,
         ...caption,
+        startTimestamp: new Date(1000 * caption.startSeconds)
+          .toISOString()
+          .substring(14, 21),
+        endTimeStamp: new Date(1000 * caption.endSeconds)
+          .toISOString()
+          .substring(14, 21),
         manuallySelected: false,
       }))
 
