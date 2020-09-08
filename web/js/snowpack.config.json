@@ -3,5 +3,8 @@
   "plugins": [],
   "installOptions": {
     "polyfillNode": true
+  },
+  "devOptions": {
+    "open": "none"
   }
 }
