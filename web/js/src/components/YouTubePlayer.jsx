@@ -42,8 +42,10 @@ export default class YouTubePlayer extends Component {
 
   shouldComponentUpdate(nextProps) {
     const props = this.props
+
     return (
       props.videoId !== nextProps.videoId ||
+      props.activeCaption !== nextProps.activeCaption ||
       props.width !== nextProps.width ||
       props.height !== nextProps.height ||
       props.playing !== nextProps.playing ||
@@ -56,7 +58,7 @@ export default class YouTubePlayer extends Component {
    * Invoke player methods based on incoming props
    */
   componentDidUpdate(prevProps) {
-    const { videoId, playing, volume, playbackRate } = this.props
+    const { videoId, activeCaption, playing, volume, playbackRate } = this.props
 
     if (videoId && prevProps.videoId !== videoId) {
       if (!this.player) this._createPlayer(this.props)
@@ -84,6 +86,12 @@ export default class YouTubePlayer extends Component {
 
     if (prevProps.videoId && !videoId) {
       this._destroyPlayer()
+    }
+
+    // Automatically seek player to a manually selected caption
+    if (activeCaption.manuallySelected) {
+      this.player.seek(activeCaption.startSeconds)
+      this.player.pause()
     }
   }
 

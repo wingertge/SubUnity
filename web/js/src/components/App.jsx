@@ -26,6 +26,19 @@ export default function App() {
   }
 
   /**
+   * Whenever the player resumes playback, all captions should be
+   * reset to not being manually selected.
+   */
+  function resetCaptions() {
+    let allCaptions = captions.map(caption => ({
+      ...caption,
+      manuallySelected: false,
+    }))
+
+    setCaptions(allCaptions)
+  }
+
+  /**
    * Find the caption that needs to be displayed, and then set that
    * as the active caption.
    *
@@ -116,6 +129,7 @@ export default function App() {
         videoID={videoID}
         captions={captions}
         activeCaption={activeCaption}
+        resetCaptions={resetCaptions}
         updateActiveCaption={updateActiveCaption}
       />
     </div>

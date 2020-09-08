@@ -20,7 +20,7 @@ export default function Caption(props) {
           value={props.endTimeStamp}
           onFocus={event => props.captionSelected(props.id)}
           onInput={event =>
-            props.updateCaption(props.id, "startTimestamp", event.target.value)
+            props.updateCaption(props.id, "endTimestamp", event.target.value)
           }
         />
       </div>
