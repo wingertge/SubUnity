@@ -60,9 +60,9 @@ fn asset(path: PathBuf) -> Result<&'static [u8], NotFound<()>> {
         .ok_or_else(|| NotFound(()))
 }
 
-#[get("/edit/<video_id>")]
-fn edit(video_id: String) -> Template {
-    template(|w| edit_html(w, &video_id))
+#[get("/edit/<video_id>?<lang>")]
+fn edit(video_id: String, lang: String) -> Template {
+    template(|w| edit_html(w, &video_id, &lang))
 }
 
 pub struct ApiConn(pub Channel);
