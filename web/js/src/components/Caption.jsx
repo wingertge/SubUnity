@@ -1,10 +1,6 @@
 import { h } from "preact"
 
 export default function Caption(props) {
-  function secondify(timestamp) {
-    return new Date("1970-01-01T00:" + timestamp + "Z").getTime() / 1000
-  }
-
   return (
     <div class={props.isActive ? "caption caption-highlighted" : "caption"}>
       <div class="timestamps">
@@ -13,16 +9,11 @@ export default function Caption(props) {
           class="startTimestamp"
           value={props.startTimestamp}
           onFocus={event => props.captionSelected(props.id)}
-          onInput={event => {
+          onChange={event => {
             props.updateCaptionField(
               props.id,
               "startTimestamp",
               event.target.value
-            )
-            props.updateCaptionField(
-              props.id,
-              "startSeconds",
-              secondify(event.target.value)
             )
           }}
         />
@@ -32,16 +23,11 @@ export default function Caption(props) {
           class="endTimestamp"
           value={props.endTimestamp}
           onFocus={event => props.captionSelected(props.id)}
-          onInput={event => {
+          onChange={event => {
             props.updateCaptionField(
               props.id,
               "endTimestamp",
               event.target.value
-            )
-            props.updateCaptionField(
-              props.id,
-              "endSeconds",
-              secondify(event.target.value)
             )
           }}
         />

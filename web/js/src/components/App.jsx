@@ -5,6 +5,8 @@ import Header from "./Header"
 import Player from "./Player"
 import CaptionList from "./CaptionList"
 
+import { secondify } from "../utils"
+
 export default function App() {
   let [videoID, setVideoID] = useState("")
   let [error, setError] = useState("")
@@ -14,14 +16,38 @@ export default function App() {
   /**
    * Update a specific caption field
    *
-   * @todo Populate change to API
    * @param {number} id
    * @param {string} field
    * @param {string|number} content
    */
   function updateCaptionField(id, field, content) {
-    let payload = [...captions]
-    payload[id][field] = content
+    let payload = captions.map(caption => {
+      if (caption.id === id) {
+        let updatedCaption = {
+          ...caption,
+          [field]: content,
+        }
+
+        // Convert human readable timestamps back to machine friendly seconds
+        switch (field) {
+          case "startTimestamp":
+            updatedCaption["startSeconds"] = secondify(content)
+            break
+          case "endTimestamp":
+            updatedCaption["endSeconds"] = secondify(content)
+            break
+        }
+
+        // Update the currently active caption while it's being edited
+        if (activeCaption.id === id) {
+          setActiveCaption(updatedCaption)
+        }
+
+        return updatedCaption
+      }
+
+      return caption
+    })
 
     setCaptions(payload)
   }
@@ -76,6 +102,12 @@ export default function App() {
     }
   }
 
+  /**
+   * Find the caption by specific ID and mark it as being
+   * selected by a user instead of being selected from playback
+   *
+   * @param {number} id
+   */
   function captionSelected(id) {
     let selectedCaption = captions.filter(caption => caption.id == id)
     selectedCaption[0].manuallySelected = true
@@ -99,7 +131,6 @@ export default function App() {
 
       let fetchedCaptions = results.entries.map((caption, index) => ({
         id: index,
-        ...caption,
         startTimestamp: new Date(1000 * caption.startSeconds)
           .toISOString()
           .substring(14, 21),
@@ -107,6 +138,7 @@ export default function App() {
           .toISOString()
           .substring(14, 21),
         manuallySelected: false,
+        ...caption,
       }))
 
       setCaptions(fetchedCaptions)
@@ -145,7 +177,7 @@ export default function App() {
 
   return (
     <div class="app">
-      <Header />
+      <Header saveCaptions={saveCaptions} />
 
       <div class="editor">
         <CaptionList
