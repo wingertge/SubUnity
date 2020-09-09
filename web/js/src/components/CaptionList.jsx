@@ -9,8 +9,10 @@ export default function CaptionList(props) {
       {props.captions.map(caption => (
         <Caption
           key={caption.id}
-          updateCaption={props.updateCaption}
+          updateCaptionField={props.updateCaptionField}
+          captionSelected={props.captionSelected}
           isActive={props.activeCaption.id === caption.id}
+          deleteCaption={props.deleteCaption}
           {...caption}
         />
       ))}
