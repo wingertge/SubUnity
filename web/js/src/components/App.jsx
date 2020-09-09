@@ -5,115 +5,11 @@ import Header from "./Header"
 import Player from "./Player"
 import CaptionList from "./CaptionList"
 
-import { secondify } from "../utils"
-
 export default function App() {
   let [videoID, setVideoID] = useState("")
   let [error, setError] = useState("")
   let [captions, setCaptions] = useState([])
   let [activeCaption, setActiveCaption] = useState({})
-
-  /**
-   * Update a specific caption field
-   *
-   * @param {number} id
-   * @param {string} field
-   * @param {string|number} content
-   */
-  function updateCaptionField(id, field, content) {
-    let payload = captions.map(caption => {
-      if (caption.id === id) {
-        let updatedCaption = {
-          ...caption,
-          [field]: content,
-        }
-
-        // Convert human readable timestamps back to machine friendly seconds
-        switch (field) {
-          case "startTimestamp":
-            updatedCaption["startSeconds"] = secondify(content)
-            break
-          case "endTimestamp":
-            updatedCaption["endSeconds"] = secondify(content)
-            break
-        }
-
-        // Update the currently active caption while it's being edited
-        if (activeCaption.id === id) {
-          setActiveCaption(updatedCaption)
-        }
-
-        return updatedCaption
-      }
-
-      return caption
-    })
-
-    setCaptions(payload)
-  }
-
-  /**
-   * Whenever the player resumes playback, all captions should be
-   * reset to not being manually selected.
-   */
-  function resetCaptions() {
-    let allCaptions = captions.map(caption => ({
-      ...caption,
-      manuallySelected: false,
-    }))
-
-    setCaptions(allCaptions)
-  }
-
-  function deleteCaption(id) {
-    let confirmation = confirm("Are you sure that you want to delete this?")
-
-    if (confirmation) {
-      if (activeCaption.id === id) {
-        setActiveCaption({})
-      }
-
-      let deletedCaptions = captions.filter(caption => caption.id !== id)
-      setCaptions(deletedCaptions)
-    }
-  }
-
-  /**
-   * Find the caption that needs to be displayed, and then set that
-   * as the active caption.
-   *
-   * @param {number} currentTime Seconds since video started
-   * @param {boolean} manuallySelected Caption was selected by a user
-   */
-  function updateActiveCaption(currentTime, manuallySelected) {
-    let currentCaption = captions.filter(
-      caption =>
-        currentTime > caption.startSeconds && currentTime < caption.endSeconds
-    )
-
-    if (manuallySelected) {
-      currentCaption[0].manuallySelected = true
-    }
-
-    // Only update the active caption if there are any
-    // matching captions, otherwise this will throw an error.
-    if (currentCaption.length !== 0) {
-      setActiveCaption(currentCaption[0])
-    }
-  }
-
-  /**
-   * Find the caption by specific ID and mark it as being
-   * selected by a user instead of being selected from playback
-   *
-   * @param {number} id
-   */
-  function captionSelected(id) {
-    let selectedCaption = captions.filter(caption => caption.id == id)
-    selectedCaption[0].manuallySelected = true
-
-    setActiveCaption(selectedCaption[0])
-  }
 
   /**
    * Fetch captions from the API
@@ -186,18 +82,15 @@ export default function App() {
         <CaptionList
           captions={captions}
           activeCaption={activeCaption}
-          updateActiveCaption={updateActiveCaption}
-          deleteCaption={deleteCaption}
-          updateCaptionField={updateCaptionField}
-          captionSelected={captionSelected}
+          setCaptions={setCaptions}
         />
 
         <Player
           videoID={videoID}
           captions={captions}
+          setCaptions={setCaptions}
           activeCaption={activeCaption}
-          resetCaptions={resetCaptions}
-          updateActiveCaption={updateActiveCaption}
+          setActiveCaption={setActiveCaption}
         />
       </div>
     </div>
