@@ -10,7 +10,7 @@ export default function Header(props) {
         <span class="video-title">Video Title</span>
       </div>
       <div class="actions">
-        <button>Save</button>
+        <button onClick={event => props.saveCaptions()}>Save</button>
         <button>Import</button>
         <button style={{ marginRight: 0 }}>Export</button>
       </div>

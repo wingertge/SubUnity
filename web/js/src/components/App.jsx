@@ -151,12 +151,17 @@ export default function App() {
   async function saveCaptions() {
     try {
       let payload = {
-        entries: [captions.map(caption => ({ startSeconds }))],
+        entries: captions.map(({ startSeconds, endSeconds, text }) => ({
+          startSeconds,
+          endSeconds,
+          text,
+        })),
         videoId: videoID,
         language: "en",
       }
       let response = await fetch("/subtitles/", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       })
     } catch (error) {
@@ -165,10 +170,8 @@ export default function App() {
   }
 
   useEffect(() => {
-    let VIDEO_ID = window.location.pathname.split("/")[2]
-
-    setVideoID(VIDEO_ID)
-    fetchCaptions(VIDEO_ID, "en")
+    setVideoID(window.VIDEO_ID)
+    fetchCaptions(window.VIDEO_ID, "en")
   }, [])
 
   if (error) {
