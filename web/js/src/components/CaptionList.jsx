@@ -13,7 +13,7 @@ export default function CaptionList(props) {
    *
    * @param {number} id
    * @param {string} field
-   * @param {string|number} content
+   * @param {string} content
    */
   function updateCaptionField(id, field, content) {
     let payload = captions.map(caption => {

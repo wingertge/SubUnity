@@ -44,6 +44,9 @@ export default function App() {
     }
   }
 
+  /**
+   * Propagate changes to the API
+   */
   async function saveCaptions() {
     try {
       let payload = {
@@ -81,8 +84,9 @@ export default function App() {
       <div class="editor">
         <CaptionList
           captions={captions}
-          activeCaption={activeCaption}
           setCaptions={setCaptions}
+          activeCaption={activeCaption}
+          setActiveCaption={setActiveCaption}
         />
 
         <Player

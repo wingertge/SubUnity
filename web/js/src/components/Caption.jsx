@@ -1,53 +1,54 @@
 import { h } from "preact"
 
 export default function Caption(props) {
+  let {
+    id,
+    startTimestamp,
+    endTimestamp,
+    text,
+    isActive,
+    captionSelected,
+    updateCaptionField,
+    deleteCaption,
+  } = props
+
   return (
-    <div class={props.isActive ? "caption caption-highlighted" : "caption"}>
+    <div class={isActive ? "caption caption-highlighted" : "caption"}>
       <div class="timestamps">
         <input
           type="text"
           class="startTimestamp"
-          value={props.startTimestamp}
-          onFocus={event => props.captionSelected(props.id)}
-          onChange={event => {
-            props.updateCaptionField(
-              props.id,
-              "startTimestamp",
-              event.target.value
-            )
-          }}
+          value={startTimestamp}
+          onFocus={() => captionSelected(id)}
+          onChange={event =>
+            updateCaptionField(id, "startTimestamp", event.target.value)
+          }
         />
 
         <input
           type="text"
           class="endTimestamp"
-          value={props.endTimestamp}
-          onFocus={event => props.captionSelected(props.id)}
-          onChange={event => {
-            props.updateCaptionField(
-              props.id,
-              "endTimestamp",
-              event.target.value
-            )
-          }}
+          value={endTimestamp}
+          onFocus={() => captionSelected(id)}
+          onChange={event =>
+            updateCaptionField(id, "endTimestamp", event.target.value)
+          }
         />
       </div>
 
       <textarea
         class="caption-textbox"
         name="editable_text"
-        value={props.text}
+        value={text}
         rows="3"
-        onFocus={event => props.captionSelected(props.id)}
-        onInput={event =>
-          props.updateCaptionField(props.id, "text", event.target.value)
-        }
+        onFocus={() => captionSelected(id)}
+        onInput={event => updateCaptionField(id, "text", event.target.value)}
       />
 
       <div
         class="caption-delete"
         role="button"
-        onClick={event => props.deleteCaption(props.id)}
+        onClick={() => deleteCaption(id)}
       >
         &times;
       </div>

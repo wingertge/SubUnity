@@ -38,7 +38,7 @@ export default function Player(props) {
    * @param {number} currentTime Seconds since video started
    * @param {boolean} manuallySelected Caption was selected by a user
    */
-  function updateActiveCaption(currentTime, manuallySelected) {
+  function updateActiveCaption(currentTime) {
     let currentCaption = captions.filter(
       caption =>
         currentTime > caption.startSeconds && currentTime < caption.endSeconds
