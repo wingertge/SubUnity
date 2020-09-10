@@ -87,6 +87,42 @@ async fn get_or_init_subtitles(conn: DbConnection, video_id: &str, language: &st
     }
 }
 
+#[derive(Serialize, Deserialize)]
+struct VideoInfoResponse {
+    pub items: Vec<VideoInfo>
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct VideoInfo {
+    pub snippet: Snippet
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Snippet {
+    pub title: String,
+    #[serde(rename = "channelId")]
+    pub channel_id: String,
+    #[serde(rename = "channelTitle")]
+    pub channel_title: String
+}
+
+pub async fn get_video_info(id: &str) -> Result<VideoInfo, Status> {
+    let key = std::env::var("GOOGLE_API_KEY")
+        .expect("Missing google API key");
+    let client = reqwest::Client::new();
+
+    let mut info = client.get("https://www.googleapis.com/youtube/v3/videos")
+        .query(&[("part", "snippet"), ("id", id), ("key", &key)])
+        .send()
+        .await
+        .map_err(|e| Status::internal(format!("{}", e)))?
+        .json::<VideoInfoResponse>()
+        .await
+        .map_err(|e| Status::internal(format!("{}", e)))?;
+
+    info.items.pop().ok_or_else(|| Status::not_found("Video not found"))
+}
+
 #[async_trait]
 impl VideoSubs for VideoSubService {
     async fn set_subtitles(&self, request: Request<Subtitles>) -> Result<Response<SetSubtitleResponse>, Status> {
@@ -131,10 +167,14 @@ impl VideoSubs for VideoSubService {
         let req = request.into_inner();
         let subs = get_or_init_subtitles(self.db()?, &req.video_id, &req.language).await?;
         let entries = serde_json::from_str::<Vec<Entry>>(&subs.subs_json).unwrap();
+        let video_info = get_video_info(&subs.video_id).await?;
         Ok(Response::new(Subtitles {
             entries,
             video_id: subs.video_id,
-            language: subs.language
+            language: subs.language,
+            video_title: video_info.snippet.title,
+            uploader_id: video_info.snippet.channel_id,
+            uploader_name: video_info.snippet.channel_title
         }))
     }
 

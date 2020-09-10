@@ -35,6 +35,9 @@ message Subtitles {
   repeated Entry entries = 1;
   string videoId = 2;
   string language = 3;
+  string videoTitle = 4;
+  string uploaderId = 5;
+  string uploaderName = 6;
 }
 
 message SetSubtitleResponse {}

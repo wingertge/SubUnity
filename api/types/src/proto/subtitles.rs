@@ -40,6 +40,12 @@ pub struct Subtitles {
     pub video_id: std::string::String,
     #[prost(string, tag = "3")]
     pub language: std::string::String,
+    #[prost(string, tag = "4")]
+    pub video_title: std::string::String,
+    #[prost(string, tag = "5")]
+    pub uploader_id: std::string::String,
+    #[prost(string, tag = "6")]
+    pub uploader_name: std::string::String,
 }
 pub mod subtitles {
     #[derive(Clone, PartialEq, ::prost::Message, Serialize, Deserialize)]

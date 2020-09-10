@@ -3,6 +3,7 @@ use serde::Deserialize;
 use htmlescape::decode_html;
 use api_types::subtitles::subtitles::Entry;
 use api_types::subtitles::Subtitles;
+use crate::subtitles::get_video_info;
 
 #[derive(Deserialize, Debug)]
 struct CaptionTracks {
@@ -80,9 +81,14 @@ pub async fn get_subtitles(video_id: &str, lang: &str) -> Option<Subtitles> {
         .collect::<Option<Vec<_>>>()?;
     println!("Done!");
 
+    let video_info = get_video_info(video_id).await.ok()?;
+
     Some(Subtitles {
         video_id: video_id.to_string(),
         language: lang.to_string(),
-        entries
+        entries,
+        video_title: video_info.snippet.title,
+        uploader_id: video_info.snippet.channel_id,
+        uploader_name: video_info.snippet.channel_title
     })
 }

@@ -5,7 +5,7 @@ use std::io::{self, Write};
 use super::{Html,ToHtml};
 
 pub fn edit_html<W>(mut _ructe_out_: &mut W, video_id: &str, lang: &str) -> io::Result<()> where W: ?Sized, for<'a> &'a mut W: Write {
-_ructe_out_.write_all(b"<html lang=\"en\">\r\n    <head>\r\n        <title>Subtitle Editor</title>\r\n        <meta charset=\"utf-8\" />\r\n    </head>\r\n    <body>\r\n        <div id=\"root\"></div>\r\n        <script>\r\n            window.VIDEO_ID = \"")?;
+_ructe_out_.write_all(b"<html lang=\"en\">\r\n    <head>\r\n        <title>Subtitle Editor</title>\r\n        <meta charset=\"utf-8\" />\r\n        <link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css\" />\r\n    </head>\r\n    <body>\r\n        <div id=\"root\"></div>\r\n        <script>\r\n            window.VIDEO_ID = \"")?;
 video_id.to_html(&mut _ructe_out_)?;
 _ructe_out_.write_all(b"\";\r\n            window.SUBTITLE_LANG = \"")?;
 lang.to_html(&mut _ructe_out_)?;
