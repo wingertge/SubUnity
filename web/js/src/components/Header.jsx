@@ -7,7 +7,7 @@ export default function Header(props) {
         <a href="/" class="back-arrow">
           &larr;
         </a>
-        <span class="video-title">Video Title</span>
+        <span class="video-title">{props.videoTitle}</span>
       </div>
       <div class="actions">
         <button onClick={() => props.saveCaptions()}>Save</button>

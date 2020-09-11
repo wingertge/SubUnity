@@ -6,13 +6,13 @@ import Player from "./Player"
 import CaptionList from "./CaptionList"
 
 export default function App() {
-  let [videoID, setVideoID] = useState("")
+  let [videoInfo, setVideoInfo] = useState({})
   let [error, setError] = useState("")
   let [captions, setCaptions] = useState([])
   let [activeCaption, setActiveCaption] = useState({})
 
   /**
-   * Fetch captions from the API
+   * Fetch video information and captions from the API
    *
    * @todo Better error handling if this step fails
    * @todo Allow users to import SRT files from their desktop
@@ -20,12 +20,14 @@ export default function App() {
    * @param {string} id
    * @param {string} language
    */
-  async function fetchCaptions(id, language) {
+  async function fetchCaptions(id, lang) {
     try {
-      let response = await fetch(`/subtitles/${id}?lang=${language}`)
-      let results = await response.json()
+      let response = await fetch(`/subtitles/${id}?lang=${lang}`)
+      let data = await response.json()
 
-      let fetchedCaptions = results.entries.map((caption, index) => ({
+      let { entries, videoId, language, videoTitle } = data
+
+      let fetchedCaptions = entries.map((caption, index) => ({
         id: index,
         startTimestamp: new Date(1000 * caption.startSeconds)
           .toISOString()
@@ -37,6 +39,7 @@ export default function App() {
         ...caption,
       }))
 
+      setVideoInfo({ id: videoId, title: videoTitle, language })
       setCaptions(fetchedCaptions)
     } catch (error) {
       setError("Error fetching captions")
@@ -55,9 +58,10 @@ export default function App() {
           endSeconds,
           text,
         })),
-        videoId: videoID,
-        language: "en",
+        videoId: videoInfo.id,
+        language: videoInfo.language,
       }
+
       let response = await fetch("/subtitles/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -69,8 +73,7 @@ export default function App() {
   }
 
   useEffect(() => {
-    setVideoID(window.VIDEO_ID)
-    fetchCaptions(window.VIDEO_ID, "en")
+    fetchCaptions(window.VIDEO_ID, window.SUBTITLE_LANG)
   }, [])
 
   if (error) {
@@ -79,7 +82,7 @@ export default function App() {
 
   return (
     <div class="app">
-      <Header saveCaptions={saveCaptions} />
+      <Header videoTitle={videoInfo.title} saveCaptions={saveCaptions} />
 
       <div class="editor">
         <CaptionList
@@ -90,7 +93,7 @@ export default function App() {
         />
 
         <Player
-          videoID={videoID}
+          videoID={videoInfo.id}
           captions={captions}
           setCaptions={setCaptions}
           activeCaption={activeCaption}
