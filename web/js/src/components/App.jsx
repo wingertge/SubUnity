@@ -48,7 +48,7 @@ export default function App() {
   }
 
   /**
-   * Propagate changes to the API
+   * Save changes to the API
    */
   async function saveCaptions() {
     try {
