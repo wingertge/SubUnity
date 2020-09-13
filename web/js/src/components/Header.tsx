@@ -1,6 +1,11 @@
 import { h } from "preact"
 
-export default function Header(props) {
+interface HeaderProps {
+  videoTitle: string
+  saveCaptions(): void
+}
+
+export default function Header(props: HeaderProps) {
   return (
     <div class="header">
       <div class="heading">

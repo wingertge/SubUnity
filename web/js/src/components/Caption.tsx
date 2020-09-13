@@ -1,6 +1,17 @@
 import { h } from "preact"
 
-export default function Caption(props) {
+interface CaptionProps {
+  id: number
+  startTimestamp: string
+  endTimestamp: string
+  text: string
+  isActive: boolean
+  captionSelected(id: number): void
+  updateCaptionField(id: number, field: string, content: string): void
+  deleteCaption(id: number): void
+}
+
+export default function Caption(props: CaptionProps) {
   let {
     id,
     startTimestamp,
@@ -40,7 +51,7 @@ export default function Caption(props) {
         class="caption-textbox"
         name="editable_text"
         value={text}
-        rows="3"
+        rows={3}
         onFocus={() => captionSelected(id)}
         onInput={event => updateCaptionField(id, "text", event.target.value)}
       />
