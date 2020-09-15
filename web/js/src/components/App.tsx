@@ -9,6 +9,7 @@ import type { Caption, CaptionData, VideoInfo } from "../types"
 
 export default function App() {
   let [videoInfo, setVideoInfo] = useState<VideoInfo>({
+    videoTitle: "",
     videoId: "",
     language: "",
   })
@@ -106,7 +107,7 @@ export default function App() {
         />
 
         <Player
-          videoID={videoInfo.videoId}
+          videoId={videoInfo.videoId}
           captions={captions}
           setCaptions={setCaptions}
           activeCaption={activeCaption}

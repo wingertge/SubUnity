@@ -1,12 +1,15 @@
 import { h } from "preact"
 
 import YouTubePlayer from "./YouTubePlayer"
+import type { VideoInfo, Caption, CaptionState } from "../types"
+
+interface PlayerProps extends CaptionState, VideoInfo {}
 
 import "../styles/player.css"
 
-export default function Player(props) {
+export default function Player(props: PlayerProps) {
   let {
-    videoID,
+    videoId,
     captions,
     setCaptions,
     activeCaption,
@@ -17,8 +20,8 @@ export default function Player(props) {
    * Whenever the player resumes playback, all captions should be
    * reset to not being manually selected.
    */
-  function resetCaptions() {
-    let allCaptions = captions.map(caption => ({
+  function resetCaptions(): void {
+    let allCaptions: Caption[] = captions.map(caption => ({
       ...caption,
       manuallySelected: false,
     }))
@@ -27,19 +30,13 @@ export default function Player(props) {
   }
 
   /**
-   * Checks to see if the active caption has more than one entry
-   */
-  let hasActiveCaption = typeof (activeCaption !== undefined)
-
-  /**
    * Find the caption that needs to be displayed, and then set that
    * as the active caption.
    *
    * @param {number} currentTime Seconds since video started
-   * @param {boolean} manuallySelected Caption was selected by a user
    */
-  function updateActiveCaption(currentTime) {
-    let currentCaption = captions.filter(
+  function updateActiveCaption(currentTime: number): void {
+    let currentCaption: Caption[] = captions.filter(
       caption =>
         currentTime > caption.startSeconds && currentTime < caption.endSeconds
     )
@@ -56,10 +53,10 @@ export default function Player(props) {
       <YouTubePlayer
         width="1024px"
         height="576px"
-        videoId={videoID}
+        videoId={videoId}
         activeCaption={activeCaption}
         onPlaying={resetCaptions}
-        onTimeUpdate={currentTime => updateActiveCaption(currentTime)}
+        onTimeUpdate={(currentTime: number) => updateActiveCaption(currentTime)}
       />
 
       {activeCaption && <div class="active-caption">{activeCaption.text}</div>}
