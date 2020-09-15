@@ -5,118 +5,14 @@ import Header from "./Header"
 import Player from "./Player"
 import CaptionList from "./CaptionList"
 
-import { secondify } from "../utils"
-
 export default function App() {
-  let [videoID, setVideoID] = useState("")
+  let [videoInfo, setVideoInfo] = useState({})
   let [error, setError] = useState("")
   let [captions, setCaptions] = useState([])
   let [activeCaption, setActiveCaption] = useState({})
 
   /**
-   * Update a specific caption field
-   *
-   * @param {number} id
-   * @param {string} field
-   * @param {string|number} content
-   */
-  function updateCaptionField(id, field, content) {
-    let payload = captions.map(caption => {
-      if (caption.id === id) {
-        let updatedCaption = {
-          ...caption,
-          [field]: content,
-        }
-
-        // Convert human readable timestamps back to machine friendly seconds
-        switch (field) {
-          case "startTimestamp":
-            updatedCaption["startSeconds"] = secondify(content)
-            break
-          case "endTimestamp":
-            updatedCaption["endSeconds"] = secondify(content)
-            break
-        }
-
-        // Update the currently active caption while it's being edited
-        if (activeCaption.id === id) {
-          setActiveCaption(updatedCaption)
-        }
-
-        return updatedCaption
-      }
-
-      return caption
-    })
-
-    setCaptions(payload)
-  }
-
-  /**
-   * Whenever the player resumes playback, all captions should be
-   * reset to not being manually selected.
-   */
-  function resetCaptions() {
-    let allCaptions = captions.map(caption => ({
-      ...caption,
-      manuallySelected: false,
-    }))
-
-    setCaptions(allCaptions)
-  }
-
-  function deleteCaption(id) {
-    let confirmation = confirm("Are you sure that you want to delete this?")
-
-    if (confirmation) {
-      if (activeCaption.id === id) {
-        setActiveCaption({})
-      }
-
-      let deletedCaptions = captions.filter(caption => caption.id !== id)
-      setCaptions(deletedCaptions)
-    }
-  }
-
-  /**
-   * Find the caption that needs to be displayed, and then set that
-   * as the active caption.
-   *
-   * @param {number} currentTime Seconds since video started
-   * @param {boolean} manuallySelected Caption was selected by a user
-   */
-  function updateActiveCaption(currentTime, manuallySelected) {
-    let currentCaption = captions.filter(
-      caption =>
-        currentTime > caption.startSeconds && currentTime < caption.endSeconds
-    )
-
-    if (manuallySelected) {
-      currentCaption[0].manuallySelected = true
-    }
-
-    // Only update the active caption if there are any
-    // matching captions, otherwise this will throw an error.
-    if (currentCaption.length !== 0) {
-      setActiveCaption(currentCaption[0])
-    }
-  }
-
-  /**
-   * Find the caption by specific ID and mark it as being
-   * selected by a user instead of being selected from playback
-   *
-   * @param {number} id
-   */
-  function captionSelected(id) {
-    let selectedCaption = captions.filter(caption => caption.id == id)
-    selectedCaption[0].manuallySelected = true
-
-    setActiveCaption(selectedCaption[0])
-  }
-
-  /**
-   * Fetch captions from the API
+   * Fetch video information and captions from the API
    *
    * @todo Better error handling if this step fails
    * @todo Allow users to import SRT files from their desktop
@@ -124,12 +20,14 @@ export default function App() {
    * @param {string} id
    * @param {string} language
    */
-  async function fetchCaptions(id, language) {
+  async function fetchCaptions(id, lang) {
     try {
-      let response = await fetch(`/subtitles/${id}?lang=${language}`)
-      let results = await response.json()
+      let response = await fetch(`/subtitles/${id}?lang=${lang}`)
+      let data = await response.json()
 
-      let fetchedCaptions = results.entries.map((caption, index) => ({
+      let { entries, videoId, language, videoTitle } = data
+
+      let fetchedCaptions = entries.map((caption, index) => ({
         id: index,
         startTimestamp: new Date(1000 * caption.startSeconds)
           .toISOString()
@@ -141,6 +39,7 @@ export default function App() {
         ...caption,
       }))
 
+      setVideoInfo({ id: videoId, title: videoTitle, language })
       setCaptions(fetchedCaptions)
     } catch (error) {
       setError("Error fetching captions")
@@ -148,6 +47,9 @@ export default function App() {
     }
   }
 
+  /**
+   * Save changes to the API
+   */
   async function saveCaptions() {
     try {
       let payload = {
@@ -156,9 +58,10 @@ export default function App() {
           endSeconds,
           text,
         })),
-        videoId: videoID,
-        language: "en",
+        videoId: videoInfo.id,
+        language: videoInfo.language,
       }
+
       let response = await fetch("/subtitles/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -170,8 +73,7 @@ export default function App() {
   }
 
   useEffect(() => {
-    setVideoID(window.VIDEO_ID)
-    fetchCaptions(window.VIDEO_ID, "en")
+    fetchCaptions(window.VIDEO_ID, window.SUBTITLE_LANG)
   }, [])
 
   if (error) {
@@ -180,24 +82,22 @@ export default function App() {
 
   return (
     <div class="app">
-      <Header saveCaptions={saveCaptions} />
+      <Header videoTitle={videoInfo.title} saveCaptions={saveCaptions} />
 
       <div class="editor">
         <CaptionList
           captions={captions}
+          setCaptions={setCaptions}
           activeCaption={activeCaption}
-          updateActiveCaption={updateActiveCaption}
-          deleteCaption={deleteCaption}
-          updateCaptionField={updateCaptionField}
-          captionSelected={captionSelected}
+          setActiveCaption={setActiveCaption}
         />
 
         <Player
-          videoID={videoID}
+          videoID={videoInfo.id}
           captions={captions}
+          setCaptions={setCaptions}
           activeCaption={activeCaption}
-          resetCaptions={resetCaptions}
-          updateActiveCaption={updateActiveCaption}
+          setActiveCaption={setActiveCaption}
         />
       </div>
     </div>

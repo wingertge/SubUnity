@@ -67,5 +67,6 @@ textarea {
 @media only screen and (min-width: 1920px) {
   .editor {
     width: 80%;
+    margin: 0 auto;
   }
 }
