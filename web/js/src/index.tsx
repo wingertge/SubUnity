@@ -5,4 +5,5 @@ import App from "./components/App"
 
 import "./styles/main.css"
 
-render(<App />, document.body as Element)
+const root = document.getElementById("root") as Element
+render(<App />, root, root.firstElementChild as Element)

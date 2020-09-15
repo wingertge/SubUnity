@@ -1,8 +1,8 @@
 import { h } from "preact"
 
-import type { Caption, CaptionCallbacks } from "../types"
+import type { Caption, CaptionItemCallbacks } from "../types"
 
-interface CaptionProps extends Caption, CaptionCallbacks {
+export interface CaptionProps extends Caption, CaptionItemCallbacks {
   isActive: boolean
 }
 
