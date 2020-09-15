@@ -29,7 +29,7 @@ export default function Player(props) {
   /**
    * Checks to see if the active caption has more than one entry
    */
-  let hasActiveCaption = Object.entries(activeCaption).length > 1
+  let hasActiveCaption = typeof (activeCaption !== undefined)
 
   /**
    * Find the caption that needs to be displayed, and then set that
@@ -62,9 +62,7 @@ export default function Player(props) {
         onTimeUpdate={currentTime => updateActiveCaption(currentTime)}
       />
 
-      {hasActiveCaption && (
-        <div class="active-caption">{activeCaption.text}</div>
-      )}
+      {activeCaption && <div class="active-caption">{activeCaption.text}</div>}
     </div>
   )
 }

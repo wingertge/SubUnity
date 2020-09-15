@@ -5,40 +5,24 @@ import Header from "./Header"
 import Player from "./Player"
 import CaptionList from "./CaptionList"
 
-interface Caption {
-  id?: number
-  text: string
-  startSeconds: number
-  endSeconds: number
-  startTimestamp?: string
-  endTimestamp?: string
-  manuallySelected?: boolean
-}
-
-interface CaptionData extends VideoInfo {
-  entries: Array<Caption>
-}
-
-interface VideoInfo {
-  videoId: string
-  language: string
-  videoTitle: string
-  uploaderId: string
-  uploaderName: string
-}
+import type { Caption, CaptionData, VideoInfo } from "../types"
 
 export default function App() {
   let [videoInfo, setVideoInfo] = useState<VideoInfo>({
     videoId: "",
     language: "",
-    videoTitle: "",
-    uploaderId: "",
-    uploaderName: "",
   })
-
-  let [error, setError] = useState("")
-  let [captions, setCaptions] = useState([])
-  let [activeCaption, setActiveCaption] = useState({})
+  let [error, setError] = useState<string>("")
+  let [captions, setCaptions] = useState<Caption[]>([])
+  let [activeCaption, setActiveCaption] = useState<Caption>({
+    id: -1,
+    startTimestamp: "",
+    endTimestamp: "",
+    startSeconds: 0,
+    endSeconds: 0,
+    text: "Select a caption to get started!",
+    manuallySelected: false,
+  })
 
   /**
    * Fetch video information and captions from the API
@@ -49,7 +33,7 @@ export default function App() {
    * @param {number} id
    * @param {string} lang
    */
-  async function fetchCaptions(id: number, lang: string) {
+  async function fetchCaptions(id: number, lang: string): Promise<void> {
     try {
       let response: Response = await fetch(`/subtitles/${id}?lang=${lang}`)
       let data: CaptionData = await response.json()
@@ -79,7 +63,7 @@ export default function App() {
   /**
    * Save changes to the API
    */
-  async function saveCaptions() {
+  async function saveCaptions(): Promise<void> {
     try {
       let data: CaptionData = {
         entries: captions.map(({ startSeconds, endSeconds, text }) => ({
@@ -87,7 +71,7 @@ export default function App() {
           endSeconds,
           text,
         })),
-        videoId: videoInfo.id,
+        videoId: videoInfo.videoId,
         language: videoInfo.language,
       }
 
@@ -111,7 +95,7 @@ export default function App() {
 
   return (
     <div class="app">
-      <Header videoTitle={videoInfo.title} saveCaptions={saveCaptions} />
+      <Header videoTitle={videoInfo.videoTitle} saveCaptions={saveCaptions} />
 
       <div class="editor">
         <CaptionList
@@ -122,7 +106,7 @@ export default function App() {
         />
 
         <Player
-          videoID={videoInfo.id}
+          videoID={videoInfo.videoId}
           captions={captions}
           setCaptions={setCaptions}
           activeCaption={activeCaption}

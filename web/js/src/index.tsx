@@ -5,4 +5,4 @@ import App from "./components/App"
 
 import "./styles/main.css"
 
-render(<App />, document.getElementById("root"))
+render(<App />, document.body as Element)

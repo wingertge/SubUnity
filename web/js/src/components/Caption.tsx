@@ -1,17 +1,12 @@
 import { h } from "preact"
 
-interface CaptionProps {
-  id: number
-  startTimestamp: string
-  endTimestamp: string
-  text: string
+import type { Caption, CaptionCallbacks } from "../types"
+
+interface CaptionProps extends Caption, CaptionCallbacks {
   isActive: boolean
-  captionSelected(id: number): void
-  updateCaptionField(id: number, field: string, content: string): void
-  deleteCaption(id: number): void
 }
 
-export default function Caption(props: CaptionProps) {
+export default function CaptionItem(props: CaptionProps) {
   let {
     id,
     startTimestamp,
@@ -31,7 +26,7 @@ export default function Caption(props: CaptionProps) {
           class="startTimestamp"
           value={startTimestamp}
           onFocus={() => captionSelected(id)}
-          onChange={event =>
+          onChange={(event: Event) =>
             updateCaptionField(id, "startTimestamp", event.target.value)
           }
         />
@@ -41,7 +36,7 @@ export default function Caption(props: CaptionProps) {
           class="endTimestamp"
           value={endTimestamp}
           onFocus={() => captionSelected(id)}
-          onChange={event =>
+          onChange={(event: Event) =>
             updateCaptionField(id, "endTimestamp", event.target.value)
           }
         />
@@ -53,7 +48,9 @@ export default function Caption(props: CaptionProps) {
         value={text}
         rows={3}
         onFocus={() => captionSelected(id)}
-        onInput={event => updateCaptionField(id, "text", event.target.value)}
+        onInput={(event: Event) =>
+          updateCaptionField(id, "text", event.target.value)
+        }
       />
 
       <div
