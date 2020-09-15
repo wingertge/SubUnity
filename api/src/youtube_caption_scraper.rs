@@ -4,6 +4,7 @@ use htmlescape::decode_html;
 use api_types::subtitles::subtitles::Entry;
 use api_types::subtitles::Subtitles;
 use crate::subtitles::get_video_info;
+use itertools::Itertools;
 
 #[derive(Deserialize, Debug)]
 struct CaptionTracks {
@@ -79,6 +80,25 @@ pub async fn get_subtitles(video_id: &str, lang: &str) -> Option<Subtitles> {
             text
         }))
         .collect::<Option<Vec<_>>>()?;
+    let entries = entries.into_iter().chunks(2);
+
+    let entries = (&entries).into_iter()
+        .map(|mut pair| {
+            let first = pair.next().unwrap();
+            let second = pair.next();
+
+            if let Some(second) = second {
+                Entry {
+                    start_seconds: first.start_seconds,
+                    end_seconds: first.end_seconds,
+                    text: format!("{}\n{}", first.text, second.text)
+                }
+            } else {
+                first
+            }
+        })
+        .collect();
+
     println!("Done!");
 
     let video_info = get_video_info(video_id).await.ok()?;
