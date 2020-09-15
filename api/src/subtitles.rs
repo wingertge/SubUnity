@@ -55,35 +55,30 @@ async fn init_subtitles(conn: DbConnection, video_id: &str, language: &str) -> R
     use crate::db::schema::subtitles;
 
     let mut generated_subs = youtube_caption_scraper::get_subtitles(video_id, language).await;
-    if generated_subs.is_none() {
-        let video_info = get_video_info(video_id).await
-            .map_err(|_| Status::not_found("Video not found"))?;
-        generated_subs.replace(Subtitles {
-            entries: vec![],
+    if let Some(generated_subs) = generated_subs {
+        let json = serde_json::to_string(&generated_subs.entries).unwrap();
+        let new = NewSubtitles {
+            video_id: &generated_subs.video_id,
+            language: &generated_subs.language,
+            subs_json: &json
+        };
+        diesel::insert_into(subtitles::table)
+            .values(&new)
+            .execute(&conn)
+            .into_status()?;
+
+        Ok(subtitles::table.find((video_id, language))
+            .load::<models::Subtitles>(&conn)
+            .into_status()?
+            .pop().unwrap())
+    } else {
+        let json = serde_json::to_string(&[]).unwrap();
+        models::Subtitles {
             video_id: video_id.to_string(),
             language: language.to_string(),
-            video_title: video_info.snippet.title,
-            uploader_id: video_info.snippet.channel_id,
-            uploader_name: video_info.snippet.channel_title
-        })
+            subs_json: json
+        }
     }
-    let generated_subs = generated_subs.unwrap();
-
-    let json = serde_json::to_string(&generated_subs.entries).unwrap();
-    let new = NewSubtitles {
-        video_id: &generated_subs.video_id,
-        language: &generated_subs.language,
-        subs_json: &json
-    };
-    diesel::insert_into(subtitles::table)
-        .values(&new)
-        .execute(&conn)
-        .into_status()?;
-
-    Ok(subtitles::table.find((video_id, language))
-        .load::<models::Subtitles>(&conn)
-        .into_status()?
-        .pop().unwrap())
 }
 
 async fn get_or_init_subtitles(conn: DbConnection, video_id: &str, language: &str) -> Result<models::Subtitles, Status> {
