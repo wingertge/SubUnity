@@ -91,7 +91,7 @@ pub async fn get_subtitles(video_id: &str, lang: &str) -> Option<Subtitles> {
                 Entry {
                     start_seconds: first.start_seconds,
                     end_seconds: first.end_seconds,
-                    text: format!("{}\n{}", first.text, second.text)
+                    text: format!("{} {}", first.text, second.text)
                 }
             } else {
                 first
