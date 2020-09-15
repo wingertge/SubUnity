@@ -2,7 +2,7 @@ import { h } from "preact"
 import CaptionItem from "./Caption"
 
 import { secondify } from "../utils"
-import type { CaptionState } from "../types"
+import type { Caption, CaptionState, EditableCaptionField } from "../types"
 
 import "../styles/captions.css"
 
@@ -18,10 +18,14 @@ export default function CaptionList(props: CaptionListProps) {
    * @param {string} field
    * @param {string} content
    */
-  function updateCaptionField(id: number, field: string, content: string) {
+  function updateCaptionField(
+    id: number,
+    field: EditableCaptionField,
+    content: string
+  ): void {
     let payload = captions.map(caption => {
       if (caption.id === id) {
-        let updatedCaption = {
+        let updatedCaption: Caption = {
           ...caption,
           [field]: content,
         }
@@ -50,7 +54,7 @@ export default function CaptionList(props: CaptionListProps) {
     setCaptions(payload)
   }
 
-  function deleteCaption(id: number) {
+  function deleteCaption(id: number): void {
     let confirmation = confirm("Are you sure that you want to delete this?")
 
     if (confirmation) {
@@ -69,7 +73,7 @@ export default function CaptionList(props: CaptionListProps) {
    *
    * @param {number} id
    */
-  function captionSelected(id: number) {
+  function captionSelected(id: number): void {
     let selectedCaption = captions.filter(caption => caption.id == id)[0]
     selectedCaption.manuallySelected = true
 

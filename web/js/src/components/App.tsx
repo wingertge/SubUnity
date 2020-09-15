@@ -40,7 +40,7 @@ export default function App() {
 
       let { videoId, language, videoTitle, uploaderId, uploaderName } = data
 
-      let fetchedCaptions = data.entries.map((caption, id) => ({
+      let fetchedCaptions: Caption[] = data.entries.map((caption, id) => ({
         id,
         startTimestamp: new Date(1000 * caption.startSeconds)
           .toISOString()

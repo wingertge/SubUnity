@@ -1,3 +1,5 @@
+type EditableCaptionField = "id" | "startTimestamp" | "endTimestamp" | "text"
+
 export interface BaseCaption {
   startSeconds: number
   endSeconds: number
@@ -24,7 +26,11 @@ export interface CaptionState {
 
 export interface CaptionItemCallbacks {
   captionSelected(id: number): void
-  updateCaptionField(id: number, field: string, content: string): void
+  updateCaptionField(
+    id: number,
+    field: EditableCaptionField,
+    content: string
+  ): void
   deleteCaption(id: number): void
 }
 
