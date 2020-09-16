@@ -1,11 +1,14 @@
 import { h } from "preact"
-import Caption from "./Caption"
+import CaptionItem from "./Caption"
 
-import { secondify } from "../utils"
+import { initialCaptionState, secondify } from "../utils"
+import type { Caption, CaptionState, EditableCaptionField } from "../types"
 
 import "../styles/captions.css"
 
-export default function CaptionList(props) {
+interface CaptionListProps extends CaptionState {}
+
+export default function CaptionList(props: CaptionListProps) {
   let { captions, setCaptions, activeCaption, setActiveCaption } = props
 
   /**
@@ -15,10 +18,14 @@ export default function CaptionList(props) {
    * @param {string} field
    * @param {string} content
    */
-  function updateCaptionField(id, field, content) {
-    let payload = captions.map(caption => {
+  function updateCaptionField(
+    id: number,
+    field: EditableCaptionField,
+    content: string
+  ): void {
+    let payload: Caption[] = captions.map(caption => {
       if (caption.id === id) {
-        let updatedCaption = {
+        let updatedCaption: Caption = {
           ...caption,
           [field]: content,
         }
@@ -47,15 +54,17 @@ export default function CaptionList(props) {
     setCaptions(payload)
   }
 
-  function deleteCaption(id) {
+  function deleteCaption(id: number): void {
     let confirmation = confirm("Are you sure that you want to delete this?")
 
     if (confirmation) {
       if (activeCaption.id === id) {
-        setActiveCaption({})
+        setActiveCaption(initialCaptionState)
       }
 
-      let deletedCaptions = captions.filter(caption => caption.id !== id)
+      let deletedCaptions: Caption[] = captions.filter(
+        caption => caption.id !== id
+      )
       setCaptions(deletedCaptions)
     }
   }
@@ -66,17 +75,19 @@ export default function CaptionList(props) {
    *
    * @param {number} id
    */
-  function captionSelected(id) {
-    let selectedCaption = captions.filter(caption => caption.id == id)
-    selectedCaption[0].manuallySelected = true
+  function captionSelected(id: number): void {
+    let selectedCaption: Caption = captions.filter(
+      caption => caption.id == id
+    )[0]
+    selectedCaption.manuallySelected = true
 
-    setActiveCaption(selectedCaption[0])
+    setActiveCaption(selectedCaption)
   }
 
   return (
     <div class="captions-list">
       {props.captions.map(caption => (
-        <Caption
+        <CaptionItem
           key={caption.id}
           updateCaptionField={updateCaptionField}
           captionSelected={captionSelected}
