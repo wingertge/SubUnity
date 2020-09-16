@@ -6,6 +6,7 @@ import Player from "./Player"
 import CaptionList from "./CaptionList"
 
 import type { Caption, CaptionData, VideoInfo } from "../types"
+import { initialCaptionState } from "../utils"
 
 export default function App() {
   let [videoInfo, setVideoInfo] = useState<VideoInfo>({
@@ -15,15 +16,7 @@ export default function App() {
   })
   let [error, setError] = useState<string>("")
   let [captions, setCaptions] = useState<Caption[]>([])
-  let [activeCaption, setActiveCaption] = useState<Caption>({
-    id: -1,
-    startTimestamp: "",
-    endTimestamp: "",
-    startSeconds: 0,
-    endSeconds: 0,
-    text: "Select a caption to get started!",
-    manuallySelected: false,
-  })
+  let [activeCaption, setActiveCaption] = useState<Caption>(initialCaptionState)
 
   /**
    * Fetch video information and captions from the API

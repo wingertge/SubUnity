@@ -1,7 +1,7 @@
 import { h } from "preact"
 import CaptionItem from "./Caption"
 
-import { secondify } from "../utils"
+import { initialCaptionState, secondify } from "../utils"
 import type { Caption, CaptionState, EditableCaptionField } from "../types"
 
 import "../styles/captions.css"
@@ -59,7 +59,7 @@ export default function CaptionList(props: CaptionListProps) {
 
     if (confirmation) {
       if (activeCaption.id === id) {
-        setActiveCaption({})
+        setActiveCaption(initialCaptionState)
       }
 
       let deletedCaptions: Caption[] = captions.filter(
