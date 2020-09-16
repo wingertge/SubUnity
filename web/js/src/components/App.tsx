@@ -5,11 +5,21 @@ import Header from "./Header"
 import Player from "./Player"
 import CaptionList from "./CaptionList"
 
+import type { Caption, CaptionData, VideoInfo } from "../types"
+import { initialCaptionState } from "../utils"
+
 export default function App() {
-  let [videoInfo, setVideoInfo] = useState({})
-  let [error, setError] = useState("")
-  let [captions, setCaptions] = useState([])
-  let [activeCaption, setActiveCaption] = useState({})
+  let [error, setError] = useState<string>("")
+  let [loading, setLoading] = useState<boolean>(true)
+
+  let [videoInfo, setVideoInfo] = useState<VideoInfo>({
+    videoTitle: "",
+    videoId: "",
+    language: "",
+  })
+
+  let [captions, setCaptions] = useState<Caption[]>([])
+  let [activeCaption, setActiveCaption] = useState<Caption>(initialCaptionState)
 
   /**
    * Fetch video information and captions from the API
@@ -18,17 +28,17 @@ export default function App() {
    * @todo Allow users to import SRT files from their desktop
    *
    * @param {string} id
-   * @param {string} language
+   * @param {string} lang
    */
-  async function fetchCaptions(id, lang) {
+  async function fetchCaptions(id: string, lang: string): Promise<void> {
     try {
-      let response = await fetch(`/subtitles/${id}?lang=${lang}`)
-      let data = await response.json()
+      let response: Response = await fetch(`/subtitles/${id}?lang=${lang}`)
+      let data: CaptionData = await response.json()
 
-      let { entries, videoId, language, videoTitle } = data
+      let { videoId, language, videoTitle, uploaderId, uploaderName } = data
 
-      let fetchedCaptions = entries.map((caption, index) => ({
-        id: index,
+      let fetchedCaptions: Caption[] = data.entries.map((caption, id) => ({
+        id,
         startTimestamp: new Date(1000 * caption.startSeconds)
           .toISOString()
           .substring(14, 21),
@@ -39,10 +49,14 @@ export default function App() {
         ...caption,
       }))
 
-      setVideoInfo({ id: videoId, title: videoTitle, language })
+      setVideoInfo({ videoId, videoTitle, language, uploaderId, uploaderName })
       setCaptions(fetchedCaptions)
+
+      setLoading(false)
     } catch (error) {
+      setLoading(false)
       setError("Error fetching captions")
+
       return console.error("Error fetching captions:", error)
     }
   }
@@ -50,22 +64,22 @@ export default function App() {
   /**
    * Save changes to the API
    */
-  async function saveCaptions() {
+  async function saveCaptions(): Promise<void> {
     try {
-      let payload = {
+      let data: CaptionData = {
         entries: captions.map(({ startSeconds, endSeconds, text }) => ({
           startSeconds,
           endSeconds,
           text,
         })),
-        videoId: videoInfo.id,
+        videoId: videoInfo.videoId,
         language: videoInfo.language,
       }
 
       let response = await fetch("/subtitles/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(data),
       })
     } catch (error) {
       console.log("Error saving captions", error)
@@ -76,13 +90,12 @@ export default function App() {
     fetchCaptions(window.VIDEO_ID, window.SUBTITLE_LANG)
   }, [])
 
-  if (error) {
-    return <div class="error">{error}</div>
-  }
-
   return (
     <div class="app">
-      <Header videoTitle={videoInfo.title} saveCaptions={saveCaptions} />
+      <Header videoTitle={videoInfo.videoTitle} saveCaptions={saveCaptions} />
+
+      {error && <div class="message error">{error}</div>}
+      {loading && <div class="message">Loading</div>}
 
       <div class="editor">
         <CaptionList
@@ -93,7 +106,7 @@ export default function App() {
         />
 
         <Player
-          videoID={videoInfo.id}
+          videoId={videoInfo.videoId}
           captions={captions}
           setCaptions={setCaptions}
           activeCaption={activeCaption}

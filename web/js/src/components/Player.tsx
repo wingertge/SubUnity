@@ -1,12 +1,16 @@
 import { h } from "preact"
 
+// @ts-ignore
 import YouTubePlayer from "./YouTubePlayer"
+import type { VideoInfo, Caption, CaptionState } from "../types"
+
+interface PlayerProps extends CaptionState, Pick<VideoInfo, "videoId"> {}
 
 import "../styles/player.css"
 
-export default function Player(props) {
+export default function Player(props: PlayerProps) {
   let {
-    videoID,
+    videoId,
     captions,
     setCaptions,
     activeCaption,
@@ -14,11 +18,16 @@ export default function Player(props) {
   } = props
 
   /**
+   * Check to see if activeCaption is not empty
+   */
+  const hasActiveCaption: boolean = activeCaption.text.length > 0
+
+  /**
    * Whenever the player resumes playback, all captions should be
    * reset to not being manually selected.
    */
-  function resetCaptions() {
-    let allCaptions = captions.map(caption => ({
+  function resetCaptions(): void {
+    let allCaptions: Caption[] = captions.map(caption => ({
       ...caption,
       manuallySelected: false,
     }))
@@ -27,27 +36,21 @@ export default function Player(props) {
   }
 
   /**
-   * Checks to see if the active caption has more than one entry
-   */
-  let hasActiveCaption = Object.entries(activeCaption).length > 1
-
-  /**
    * Find the caption that needs to be displayed, and then set that
    * as the active caption.
    *
    * @param {number} currentTime Seconds since video started
-   * @param {boolean} manuallySelected Caption was selected by a user
    */
-  function updateActiveCaption(currentTime) {
-    let currentCaption = captions.filter(
+  function updateActiveCaption(currentTime: number): void {
+    let currentCaption: Caption = captions.filter(
       caption =>
         currentTime > caption.startSeconds && currentTime < caption.endSeconds
-    )
+    )[0]
 
     // Only update the active caption if there are any
     // matching captions, otherwise this will throw an error.
-    if (currentCaption.length !== 0) {
-      setActiveCaption(currentCaption[0])
+    if (currentCaption) {
+      setActiveCaption(currentCaption)
     }
   }
 
@@ -56,10 +59,10 @@ export default function Player(props) {
       <YouTubePlayer
         width="1024px"
         height="576px"
-        videoId={videoID}
+        videoId={videoId}
         activeCaption={activeCaption}
         onPlaying={resetCaptions}
-        onTimeUpdate={currentTime => updateActiveCaption(currentTime)}
+        onTimeUpdate={(currentTime: number) => updateActiveCaption(currentTime)}
       />
 
       {hasActiveCaption && (
