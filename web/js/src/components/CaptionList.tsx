@@ -23,7 +23,7 @@ export default function CaptionList(props: CaptionListProps) {
     field: EditableCaptionField,
     content: string
   ): void {
-    let payload = captions.map(caption => {
+    let payload: Caption[] = captions.map(caption => {
       if (caption.id === id) {
         let updatedCaption: Caption = {
           ...caption,
@@ -62,7 +62,9 @@ export default function CaptionList(props: CaptionListProps) {
         setActiveCaption({})
       }
 
-      let deletedCaptions = captions.filter(caption => caption.id !== id)
+      let deletedCaptions: Caption[] = captions.filter(
+        caption => caption.id !== id
+      )
       setCaptions(deletedCaptions)
     }
   }
@@ -74,7 +76,9 @@ export default function CaptionList(props: CaptionListProps) {
    * @param {number} id
    */
   function captionSelected(id: number): void {
-    let selectedCaption = captions.filter(caption => caption.id == id)[0]
+    let selectedCaption: Caption = captions.filter(
+      caption => caption.id == id
+    )[0]
     selectedCaption.manuallySelected = true
 
     setActiveCaption(selectedCaption)
