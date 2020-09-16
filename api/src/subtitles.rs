@@ -54,7 +54,7 @@ fn diff(old: &[Entry], new: &[Entry]) -> Vec<Difference> {
 async fn init_subtitles(conn: DbConnection, video_id: &str, language: &str) -> Result<models::Subtitles, Status> {
     use crate::db::schema::subtitles;
 
-    let mut generated_subs = youtube_caption_scraper::get_subtitles(video_id, language).await;
+    let generated_subs = youtube_caption_scraper::get_subtitles(video_id, language).await;
     if let Some(generated_subs) = generated_subs {
         let json = serde_json::to_string(&generated_subs.entries).unwrap();
         let new = NewSubtitles {
@@ -72,12 +72,12 @@ async fn init_subtitles(conn: DbConnection, video_id: &str, language: &str) -> R
             .into_status()?
             .pop().unwrap())
     } else {
-        let json = serde_json::to_string(&[]).unwrap();
-        models::Subtitles {
+        let json = serde_json::to_string::<[Entry]>(&[]).unwrap();
+        Ok(models::Subtitles {
             video_id: video_id.to_string(),
             language: language.to_string(),
             subs_json: json
-        }
+        })
     }
 }
 
