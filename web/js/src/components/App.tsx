@@ -24,10 +24,10 @@ export default function App() {
    * @todo Better error handling if this step fails
    * @todo Allow users to import SRT files from their desktop
    *
-   * @param {number} id
+   * @param {string} id
    * @param {string} lang
    */
-  async function fetchCaptions(id: number, lang: string): Promise<void> {
+  async function fetchCaptions(id: string, lang: string): Promise<void> {
     try {
       let response: Response = await fetch(`/subtitles/${id}?lang=${lang}`)
       let data: CaptionData = await response.json()

@@ -1,7 +1,7 @@
 import { h } from "preact"
 
 interface HeaderProps {
-  videoTitle: string
+  videoTitle?: string
   saveCaptions(): void
 }
 
@@ -12,7 +12,9 @@ export default function Header(props: HeaderProps) {
         <a href="/" class="back-arrow">
           &larr;
         </a>
-        <span class="video-title">{props.videoTitle}</span>
+        <span class="video-title">
+          {props.videoTitle ? props.videoTitle : "Subtitle Editor"}
+        </span>
       </div>
       <div class="actions">
         <button onClick={() => props.saveCaptions()}>Save</button>

@@ -26,8 +26,8 @@ export default function CaptionItem(props: CaptionProps) {
           class="startTimestamp"
           value={startTimestamp}
           onFocus={() => captionSelected(id)}
-          onChange={(event: Event) =>
-            updateCaptionField(id, "startTimestamp", event.target.value)
+          onChange={event =>
+            updateCaptionField(id, "startTimestamp", event.currentTarget.value)
           }
         />
 
@@ -36,8 +36,8 @@ export default function CaptionItem(props: CaptionProps) {
           class="endTimestamp"
           value={endTimestamp}
           onFocus={() => captionSelected(id)}
-          onChange={(event: Event) =>
-            updateCaptionField(id, "endTimestamp", event.target.value)
+          onChange={event =>
+            updateCaptionField(id, "endTimestamp", event.currentTarget.value)
           }
         />
       </div>
@@ -48,8 +48,8 @@ export default function CaptionItem(props: CaptionProps) {
         value={text}
         rows={3}
         onFocus={() => captionSelected(id)}
-        onInput={(event: Event) =>
-          updateCaptionField(id, "text", event.target.value)
+        onInput={event =>
+          updateCaptionField(id, "text", event.currentTarget.value)
         }
       />
 

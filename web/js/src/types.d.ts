@@ -1,3 +1,12 @@
+import { StateUpdater } from "preact/hooks"
+
+declare global {
+  interface Window {
+    VIDEO_ID: string
+    SUBTITLE_LANG: string
+  }
+}
+
 type EditableCaptionField = "id" | "startTimestamp" | "endTimestamp" | "text"
 
 export interface BaseCaption {
@@ -20,8 +29,8 @@ export interface CaptionData extends VideoInfo {
 export interface CaptionState {
   captions: Caption[]
   activeCaption: Caption
-  setCaptions(captions: Caption[]): void
-  setActiveCaption(caption: Caption): void
+  setCaptions: StateUpdater<Caption[]>
+  setActiveCaption: StateUpdater<Caption>
 }
 
 export interface CaptionItemCallbacks {
