@@ -9,12 +9,15 @@ import type { Caption, CaptionData, VideoInfo } from "../types"
 import { initialCaptionState } from "../utils"
 
 export default function App() {
+  let [error, setError] = useState<string>("")
+  let [loading, setLoading] = useState<boolean>(true)
+
   let [videoInfo, setVideoInfo] = useState<VideoInfo>({
     videoTitle: "",
     videoId: "",
     language: "",
   })
-  let [error, setError] = useState<string>("")
+
   let [captions, setCaptions] = useState<Caption[]>([])
   let [activeCaption, setActiveCaption] = useState<Caption>(initialCaptionState)
 
@@ -48,8 +51,12 @@ export default function App() {
 
       setVideoInfo({ videoId, videoTitle, language, uploaderId, uploaderName })
       setCaptions(fetchedCaptions)
+
+      setLoading(false)
     } catch (error) {
+      setLoading(false)
       setError("Error fetching captions")
+
       return console.error("Error fetching captions:", error)
     }
   }
@@ -83,13 +90,12 @@ export default function App() {
     fetchCaptions(window.VIDEO_ID, window.SUBTITLE_LANG)
   }, [])
 
-  if (error) {
-    return <div class="error">{error}</div>
-  }
-
   return (
     <div class="app">
       <Header videoTitle={videoInfo.videoTitle} saveCaptions={saveCaptions} />
+
+      {error && <div class="message error">{error}</div>}
+      {loading && <div class="message">Loading</div>}
 
       <div class="editor">
         <CaptionList
