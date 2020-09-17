@@ -11,6 +11,7 @@ import { initialCaptionState } from "../utils"
 export default function App() {
   let [error, setError] = useState<string>("")
   let [loading, setLoading] = useState<boolean>(true)
+  let [message, setMessage] = useState<string>("")
 
   let [videoInfo, setVideoInfo] = useState<VideoInfo>({
     videoTitle: "",
@@ -36,6 +37,15 @@ export default function App() {
       let data: CaptionData = await response.json()
 
       let { videoId, language, videoTitle, uploaderId, uploaderName } = data
+
+      // If no caption entries returned from the API, populate with
+      // a dummy caption to help users get started
+      if (data.entries.length === 0) {
+        data.entries = [
+          { startSeconds: 0, endSeconds: 0, text: "" },
+          ...data.entries,
+        ]
+      }
 
       let fetchedCaptions: Caption[] = data.entries.map((caption, id) => ({
         id,

@@ -2,7 +2,7 @@ import { h } from "preact"
 
 import type { Caption, CaptionItemCallbacks } from "../types"
 
-export interface CaptionProps extends Caption, CaptionItemCallbacks {
+interface CaptionProps extends Caption, CaptionItemCallbacks {
   isActive: boolean
 }
 
@@ -53,12 +53,21 @@ export default function CaptionItem(props: CaptionProps) {
         }
       />
 
-      <div
-        class="caption-delete"
-        role="button"
-        onClick={() => deleteCaption(id)}
-      >
-        &times;
+      <div class="caption-options">
+        <button class="caption-button" title="New caption above">
+          &uarr;
+        </button>
+        <button
+          class="caption-button delete"
+          title="Delete caption"
+          onClick={() => deleteCaption(id)}
+        >
+          &times;
+        </button>
+
+        <button class="caption-button" title="New caption below">
+          &darr;
+        </button>
       </div>
     </div>
   )

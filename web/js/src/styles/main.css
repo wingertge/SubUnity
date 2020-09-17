@@ -15,6 +15,10 @@ textarea {
     Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
 }
 
+.message {
+  text-align: center;
+}
+
 .header {
   border-bottom: 1px solid #ddd;
   display: flex;
