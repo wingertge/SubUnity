@@ -11,6 +11,19 @@ interface CaptionListProps extends CaptionState {}
 export default function CaptionList(props: CaptionListProps) {
   let { captions, setCaptions, activeCaption, setActiveCaption } = props
 
+  function addCaption(id: number): void {
+    let captionsCopy: Caption[] = [...captions]
+    let captionIndex: number = captions.findIndex(caption => caption.id === id)
+
+    let newCaption: Caption = {
+      ...initialCaptionState,
+      id: Date.now(),
+    }
+
+    captionsCopy.splice(captionIndex + 1, 0, newCaption)
+    setCaptions(captionsCopy)
+  }
+
   /**
    * Update a specific caption field
    *
@@ -91,6 +104,7 @@ export default function CaptionList(props: CaptionListProps) {
           key={caption.id}
           updateCaptionField={updateCaptionField}
           captionSelected={captionSelected}
+          addCaption={addCaption}
           deleteCaption={deleteCaption}
           isActive={activeCaption.id === caption.id}
           {...caption}
