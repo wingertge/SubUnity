@@ -25,7 +25,7 @@ textarea {
   align-items: center;
   justify-content: space-between;
   margin: 15px 10px;
-  padding-bottom: 10px;
+  padding-bottom: 15px;
 }
 
 .heading {
@@ -36,7 +36,6 @@ textarea {
 .heading a {
   background: #ddd;
   color: #444;
-  font-size: 14px;
   border-radius: 5px;
   padding: 2px;
   text-decoration: none;
@@ -48,6 +47,7 @@ textarea {
 
 .actions button {
   background: #ddd;
+  font-size: 14px;
   font-weight: bold;
   color: #444;
   border-radius: 5px;
