@@ -11,6 +11,11 @@ interface CaptionListProps extends CaptionState {}
 export default function CaptionList(props: CaptionListProps) {
   let { captions, setCaptions, activeCaption, setActiveCaption } = props
 
+  /**
+   * Add a new caption below an already existing caption
+   *
+   * @param {number} id
+   */
   function addCaption(id: number): void {
     let captionsCopy: Caption[] = [...captions]
     let captionIndex: number = captions.findIndex(caption => caption.id === id)
