@@ -82,8 +82,7 @@ export default function App() {
           endSeconds,
           text,
         })),
-        videoId: videoInfo.videoId,
-        language: videoInfo.language,
+        ...videoInfo,
       }
 
       let response = await fetch("/subtitles/", {
