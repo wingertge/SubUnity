@@ -19,8 +19,10 @@ use rocket_contrib::{helmet::SpaceHelmet, serve::StaticFiles};
 use std::{error::Error, io, path::PathBuf, env};
 use tonic::transport::Channel;
 pub use api_types::user::User;
-use crate::authentication::UserCache;
+use crate::authentication::{UserCache, unauthorized_redirect};
 use api_types::subtitles::video_subs_client::VideoSubsClient;
+use rocket::http::{CookieJar};
+use rocket::response::Redirect;
 
 mod authentication;
 mod profile;
@@ -61,8 +63,13 @@ fn asset(path: PathBuf) -> Result<&'static [u8], NotFound<()>> {
 }
 
 #[get("/edit/<video_id>?<lang>")]
-fn edit(video_id: String, lang: String) -> Template {
+fn edit(video_id: String, lang: String, _conn: AuthenticatedApiConn<'_>) -> Template {
     template(|w| edit_html(w, &video_id, &lang))
+}
+
+#[get("/edit/<video_id>?<lang>", rank = 2)]
+fn edit_redirect(video_id: String, lang: String, cookies: &CookieJar) -> Redirect {
+    unauthorized_redirect(uri!(edit: video_id = video_id, lang = lang), cookies)
 }
 
 pub struct ApiConn(pub Channel);
@@ -130,7 +137,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 authentication::authorize,
                 profile::profile,
                 profile::profile_unauthorized,
-                edit
+                edit,
+                edit_redirect
             ]
         )
         .mount("/subtitles", routes![
