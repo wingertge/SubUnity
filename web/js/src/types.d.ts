@@ -34,6 +34,7 @@ export interface CaptionState {
 }
 
 export interface CaptionItemCallbacks {
+  addCaption(id: number): void
   captionSelected(id: number): void
   updateCaptionField(
     id: number,
