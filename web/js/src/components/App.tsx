@@ -13,6 +13,8 @@ export default function App() {
   let [loading, setLoading] = useState<boolean>(true)
   let [message, setMessage] = useState<string>("")
 
+  let [isEditorDirty, setEditorDirty] = useState<boolean>(false)
+
   let [videoInfo, setVideoInfo] = useState<VideoInfo>({
     videoTitle: "",
     videoId: "",
@@ -96,8 +98,32 @@ export default function App() {
   }
 
   useEffect(() => {
-    fetchCaptions(window.VIDEO_ID, window.SUBTITLE_LANG)
+    let hasDirtyChanges: boolean = JSON.parse(
+      localStorage.getItem("isEditorDirty")
+    )
+
+    if (hasDirtyChanges) {
+      let hydrateConfirmation: boolean = confirm(
+        "Would you like to reload your currently drafted edits?"
+      )
+
+      if (hydrateConfirmation) {
+        let localCaptionState = localStorage.getItem("captions")
+        setCaptions(JSON.parse(localCaptionState))
+        setLoading(false)
+      } else {
+        fetchCaptions(window.VIDEO_ID, window.SUBTITLE_LANG)
+      }
+    } else {
+      fetchCaptions(window.VIDEO_ID, window.SUBTITLE_LANG)
+    }
   }, [])
+
+  // Whenever dirty editor state changes, persist it to local storage
+  useEffect(
+    () => localStorage.setItem("isEditorDirty", String(isEditorDirty)),
+    [isEditorDirty]
+  )
 
   return (
     <div class="app">
