@@ -33,28 +33,25 @@ export default function App() {
    * @param {string} id
    * @param {string} lang
    */
-  async function fetchCaptions(id: string, lang: string): Promise<void> {
+  async function fetchCaptions(id: string, language: string): Promise<void> {
     try {
-      let response: Response = await fetch(`/subtitles/${id}?lang=${lang}`)
+      let response: Response = await fetch(`/subtitles/${id}?lang=${language}`)
       let data: CaptionData = await response.json()
 
-      let { videoId, language, videoTitle, uploaderId, uploaderName } = data
+      let { entries, ...videoData } = data
 
       /**
        * If no caption entries are returned from the API, populate entries
        * with a dummy caption to help users get started
        */
-      if (data.entries.length === 0) {
-        data.entries = [
-          { startSeconds: 0, endSeconds: 0, text: "" },
-          ...data.entries,
-        ]
+      if (entries.length === 0) {
+        entries.push({ startSeconds: 0, endSeconds: 0, text: "" })
       }
 
       /**
-       * Transform the captions array to add display related metadata
+       * Transform the caption entries and add display related metadata
        */
-      let fetchedCaptions: Caption[] = data.entries.map((caption, id) => ({
+      let fetchedCaptions: Caption[] = entries.map((caption, id) => ({
         id,
         startTimestamp: timestampify(caption.startSeconds),
         endTimestamp: timestampify(caption.endSeconds),
@@ -62,7 +59,7 @@ export default function App() {
         ...caption,
       }))
 
-      setVideoInfo({ videoId, videoTitle, language, uploaderId, uploaderName })
+      setVideoInfo({ ...videoData })
       setCaptions(fetchedCaptions)
 
       setLoading(false)
