@@ -2,14 +2,26 @@ import { h } from "preact"
 import CaptionItem from "./Caption"
 
 import { initialCaptionState, secondify } from "../utils"
-import type { Caption, CaptionState, EditableCaptionField } from "../types"
+import type {
+  Caption,
+  CaptionState,
+  EditorState,
+  EditableCaptionField,
+} from "../types"
 
 import "../styles/captions.css"
 
-interface CaptionListProps extends CaptionState {}
+interface CaptionListProps extends CaptionState, EditorState {}
 
 export default function CaptionList(props: CaptionListProps) {
-  let { captions, setCaptions, activeCaption, setActiveCaption } = props
+  let {
+    captions,
+    setCaptions,
+    activeCaption,
+    setActiveCaption,
+    isEditorDirty,
+    setEditorDirty,
+  } = props
 
   /**
    * Add a new caption below an already existing caption
@@ -70,8 +82,14 @@ export default function CaptionList(props: CaptionListProps) {
     })
 
     setCaptions(payload)
+    setEditorDirty(true)
   }
 
+  /**
+   * Delete a specific caption from state
+   *
+   * @param {number} id
+   */
   function deleteCaption(id: number): void {
     let confirmation = confirm("Are you sure that you want to delete this?")
 

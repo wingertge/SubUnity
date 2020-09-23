@@ -9,29 +9,28 @@ import type { Caption, CaptionData, VideoInfo } from "../types"
 import { initialCaptionState, timestampify } from "../utils"
 
 export default function App() {
+  // Editor State
   let [error, setError] = useState<string>("")
   let [loading, setLoading] = useState<boolean>(true)
   let [message, setMessage] = useState<string>("")
-
   let [isEditorDirty, setEditorDirty] = useState<boolean>(false)
 
+  // Video Information State
   let [videoInfo, setVideoInfo] = useState<VideoInfo>({
     videoTitle: "",
     videoId: "",
     language: "",
   })
 
+  // Caption State
   let [captions, setCaptions] = useState<Caption[]>([])
   let [activeCaption, setActiveCaption] = useState<Caption>(initialCaptionState)
 
   /**
    * Fetch video information and captions from the API
    *
-   * @todo Better error handling if this step fails
-   * @todo Allow users to import SRT files from their desktop
-   *
    * @param {string} id
-   * @param {string} lang
+   * @param {string} language
    */
   async function fetchCaptions(id: string, language: string): Promise<void> {
     try {
@@ -149,6 +148,8 @@ export default function App() {
           setCaptions={setCaptions}
           activeCaption={activeCaption}
           setActiveCaption={setActiveCaption}
+          isEditorDirty={isEditorDirty}
+          setEditorDirty={setEditorDirty}
         />
 
         <Player
