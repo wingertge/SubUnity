@@ -10,5 +10,17 @@ export const initialCaptionState: Caption = {
   manuallySelected: false,
 }
 
+/**
+ * Convert seconds to a human friendly timestamp
+ *
+ * @param {number} seconds
+ */
+export const timestampify = (seconds: number): string =>
+  new Date(1000 * seconds).toISOString().substring(14, 21)
+
+/**
+ * Convert a timestamp back to seconds
+ * @param {string} timestamp
+ */
 export const secondify = (timestamp: string): number =>
   new Date("1970-01-01T00:" + timestamp + "Z").getTime() / 1000

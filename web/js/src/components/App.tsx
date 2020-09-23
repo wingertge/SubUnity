@@ -6,7 +6,7 @@ import Player from "./Player"
 import CaptionList from "./CaptionList"
 
 import type { Caption, CaptionData, VideoInfo } from "../types"
-import { initialCaptionState } from "../utils"
+import { initialCaptionState, timestampify } from "../utils"
 
 export default function App() {
   let [error, setError] = useState<string>("")
@@ -40,8 +40,10 @@ export default function App() {
 
       let { videoId, language, videoTitle, uploaderId, uploaderName } = data
 
-      // If no caption entries returned from the API, populate with
-      // a dummy caption to help users get started
+      /**
+       * If no caption entries are returned from the API, populate entries
+       * with a dummy caption to help users get started
+       */
       if (data.entries.length === 0) {
         data.entries = [
           { startSeconds: 0, endSeconds: 0, text: "" },
@@ -49,14 +51,13 @@ export default function App() {
         ]
       }
 
+      /**
+       * Transform the captions array to add display related metadata
+       */
       let fetchedCaptions: Caption[] = data.entries.map((caption, id) => ({
         id,
-        startTimestamp: new Date(1000 * caption.startSeconds)
-          .toISOString()
-          .substring(14, 21),
-        endTimestamp: new Date(1000 * caption.endSeconds)
-          .toISOString()
-          .substring(14, 21),
+        startTimestamp: timestampify(caption.startSeconds),
+        endTimestamp: timestampify(caption.endSeconds),
         manuallySelected: false,
         ...caption,
       }))
@@ -78,6 +79,10 @@ export default function App() {
    */
   async function saveCaptions(): Promise<void> {
     try {
+      /**
+       * Strip out display related state and only send
+       * necessary data to the API
+       */
       let data: CaptionData = {
         entries: captions.map(({ startSeconds, endSeconds, text }) => ({
           startSeconds,
@@ -87,11 +92,20 @@ export default function App() {
         ...videoInfo,
       }
 
-      let response = await fetch("/subtitles/", {
+      let saveRequest: Response = await fetch("/subtitles/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       })
+
+      /**
+       * If the request was successful, notify the user and flag
+       * the editor as not holding any unsaved changes
+       */
+      if (saveRequest.ok) {
+        setMessage("Changes successfully saved!")
+        setEditorDirty(false)
+      }
     } catch (error) {
       console.log("Error saving captions", error)
     }
