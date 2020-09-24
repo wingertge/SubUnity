@@ -131,7 +131,7 @@ export default function App() {
         let localVideoInfoState = localStorage.getItem(`videoInfo-${TOKEN}`)
 
         setCaptions(JSON.parse(localCaptionState))
-        setVideoInfo(localVideoInfoState)
+        setVideoInfo(JSON.parse(localVideoInfoState))
         setLoading(false)
       } else {
         fetchCaptions(window.VIDEO_ID, window.SUBTITLE_LANG)
