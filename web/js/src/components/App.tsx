@@ -61,6 +61,7 @@ export default function App() {
       }))
 
       setVideoInfo({ ...videoData })
+      document.title = `${videoData.videoTitle} | Subtitle Editor`
 
       localStorage.setItem(
         `videoInfo-${TOKEN}`,
@@ -116,9 +117,15 @@ export default function App() {
     }
   }
 
+  function syncCaptionStorage(): void {
+    if (videoInfo.videoId !== "") {
+      localStorage.setItem(`captions-${TOKEN}`, JSON.stringify(captions))
+    }
+  }
+
   useEffect(() => {
     let hasDirtyChanges: boolean = JSON.parse(
-      localStorage.getItem("isEditorDirty")
+      localStorage.getItem(`isEditorDirty-${TOKEN}`)
     )
 
     if (hasDirtyChanges) {
@@ -143,16 +150,13 @@ export default function App() {
 
   // Whenever dirty editor state changes, persist it to local storage
   useEffect(
-    () => localStorage.setItem("isEditorDirty", JSON.stringify(isEditorDirty)),
+    () =>
+      localStorage.setItem(
+        `isEditorDirty-${TOKEN}`,
+        JSON.stringify(isEditorDirty)
+      ),
     [isEditorDirty]
   )
-
-  // Keep local storage in sync whenever the caption state changes
-  useEffect(() => {
-    if (videoInfo.videoId !== "") {
-      localStorage.setItem(`captions-${TOKEN}`, JSON.stringify(captions))
-    }
-  }, [captions])
 
   return (
     <div class="app">
@@ -169,6 +173,7 @@ export default function App() {
           setActiveCaption={setActiveCaption}
           isEditorDirty={isEditorDirty}
           setEditorDirty={setEditorDirty}
+          syncCaptionStorage={syncCaptionStorage}
         />
 
         <Player

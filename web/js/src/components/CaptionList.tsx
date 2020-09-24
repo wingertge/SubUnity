@@ -21,6 +21,7 @@ export default function CaptionList(props: CaptionListProps) {
     setActiveCaption,
     isEditorDirty,
     setEditorDirty,
+    syncCaptionStorage,
   } = props
 
   /**
@@ -82,6 +83,9 @@ export default function CaptionList(props: CaptionListProps) {
     })
 
     setCaptions(payload)
+
+    // Persist changes to local storage and flag the editor as being dirty
+    syncCaptionStorage()
     setEditorDirty(true)
   }
 

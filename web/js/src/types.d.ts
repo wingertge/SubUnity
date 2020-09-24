@@ -36,6 +36,7 @@ export interface CaptionState {
 export interface EditorState {
   isEditorDirty: boolean
   setEditorDirty: StateUpdater<boolean>
+  syncCaptionStorage(): void
 }
 
 export interface CaptionItemCallbacks {
