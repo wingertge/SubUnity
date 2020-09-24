@@ -8,6 +8,8 @@ import CaptionList from "./CaptionList"
 import type { Caption, CaptionData, VideoInfo } from "../types"
 import { initialCaptionState, timestampify } from "../utils"
 
+let TOKEN = `${window.VIDEO_ID}-${window.SUBTITLE_LANG}`
+
 export default function App() {
   // Editor State
   let [error, setError] = useState<string>("")
@@ -59,8 +61,13 @@ export default function App() {
       }))
 
       setVideoInfo({ ...videoData })
-      setCaptions(fetchedCaptions)
 
+      localStorage.setItem(
+        `videoInfo-${TOKEN}`,
+        JSON.stringify({ ...videoData })
+      )
+
+      setCaptions(fetchedCaptions)
       setLoading(false)
     } catch (error) {
       setLoading(false)
@@ -100,6 +107,8 @@ export default function App() {
        */
       if (saveRequest.ok) {
         setMessage("Changes successfully saved!")
+
+        localStorage.removeItem(`captions-${TOKEN}`)
         setEditorDirty(false)
       }
     } catch (error) {
@@ -118,8 +127,11 @@ export default function App() {
       )
 
       if (hydrateConfirmation) {
-        let localCaptionState = localStorage.getItem("captions")
+        let localCaptionState = localStorage.getItem(`captions-${TOKEN}`)
+        let localVideoInfoState = localStorage.getItem(`videoInfo-${TOKEN}`)
+
         setCaptions(JSON.parse(localCaptionState))
+        setVideoInfo(localVideoInfoState)
         setLoading(false)
       } else {
         fetchCaptions(window.VIDEO_ID, window.SUBTITLE_LANG)
@@ -131,9 +143,16 @@ export default function App() {
 
   // Whenever dirty editor state changes, persist it to local storage
   useEffect(
-    () => localStorage.setItem("isEditorDirty", String(isEditorDirty)),
+    () => localStorage.setItem("isEditorDirty", JSON.stringify(isEditorDirty)),
     [isEditorDirty]
   )
+
+  // Keep local storage in sync whenever the caption state changes
+  useEffect(() => {
+    if (videoInfo.videoId !== "") {
+      localStorage.setItem(`captions-${TOKEN}`, JSON.stringify(captions))
+    }
+  }, [captions])
 
   return (
     <div class="app">
