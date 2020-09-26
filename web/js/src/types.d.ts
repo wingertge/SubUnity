@@ -33,6 +33,12 @@ export interface CaptionState {
   setActiveCaption: StateUpdater<Caption>
 }
 
+export interface EditorState {
+  isEditorDirty: boolean
+  setEditorDirty: StateUpdater<boolean>
+  syncCaptionStorage(): void
+}
+
 export interface CaptionItemCallbacks {
   addCaption(id: number): void
   captionSelected(id: number): void

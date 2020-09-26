@@ -49,7 +49,7 @@ export default function CaptionItem(props: CaptionProps) {
         title="Caption text"
         value={text}
         rows={3}
-        onInput={event =>
+        onChange={event =>
           updateCaptionField(id, "text", event.currentTarget.value)
         }
       />
