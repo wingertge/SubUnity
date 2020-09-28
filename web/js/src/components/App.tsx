@@ -1,20 +1,21 @@
 import { h } from "preact"
-import { useState, useEffect } from "preact/hooks"
+import { useState, useEffect, useContext } from "preact/hooks"
 
 import Header from "./Header"
 import Player from "./Player"
 import CaptionList from "./CaptionList"
 
 import type { Caption, CaptionData, VideoInfo } from "../types"
-import { initialCaptionState, timestampify } from "../utils"
+import { initialCaptionState, timestampify, NotyfContext } from "../utils"
 
 let TOKEN = `${window.VIDEO_ID}-${window.SUBTITLE_LANG}`
 
 export default function App() {
+  let message = useContext(NotyfContext)
+
   // Editor State
   let [error, setError] = useState<string>("")
   let [loading, setLoading] = useState<boolean>(true)
-  let [message, setMessage] = useState<string>("")
   let [isEditorDirty, setEditorDirty] = useState<boolean>(false)
 
   // Video Information State
@@ -107,12 +108,13 @@ export default function App() {
        * the editor as not holding any unsaved changes
        */
       if (saveRequest.ok) {
-        setMessage("Changes successfully saved!")
+        message.success("Changes successfully saved!")
 
         localStorage.removeItem(`captions-${TOKEN}`)
         setEditorDirty(false)
       }
     } catch (error) {
+      message.error("Unable to save changes")
       console.log("Error saving captions", error)
     }
   }
@@ -140,6 +142,8 @@ export default function App() {
         setCaptions(JSON.parse(localCaptionState))
         setVideoInfo(JSON.parse(localVideoInfoState))
         setLoading(false)
+
+        message.success("Local draft restored")
       } else {
         fetchCaptions(window.VIDEO_ID, window.SUBTITLE_LANG)
       }
