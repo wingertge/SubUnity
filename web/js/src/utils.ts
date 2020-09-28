@@ -31,5 +31,13 @@ export const NotyfContext: Context<Notyf> = createContext(
   new Notyf({
     duration: 3000,
     position: { x: "left", y: "bottom" },
+    types: [
+      {
+        type: "error",
+        background: "crimson",
+        duration: 0,
+        dismissible: true,
+      },
+    ],
   })
 )

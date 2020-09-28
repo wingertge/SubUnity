@@ -114,7 +114,7 @@ export default function App() {
         setEditorDirty(false)
       }
     } catch (error) {
-      message.error("Unable to save changes")
+      message.error("Unable to save changes. Please try again later.")
       console.log("Error saving captions", error)
     }
   }
@@ -132,7 +132,7 @@ export default function App() {
 
     if (hasDirtyChanges) {
       let hydrateConfirmation: boolean = confirm(
-        "Would you like to reload your currently drafted edits?"
+        "Would you like to reload your currently drafted changes?"
       )
 
       if (hydrateConfirmation) {
@@ -143,7 +143,7 @@ export default function App() {
         setVideoInfo(JSON.parse(localVideoInfoState))
         setLoading(false)
 
-        message.success("Local draft restored")
+        message.success("Local drafted changes restored")
       } else {
         fetchCaptions(window.VIDEO_ID, window.SUBTITLE_LANG)
       }
