@@ -122,7 +122,7 @@ export default class YouTubePlayer extends Component {
     this.player = new YTPlayer(this.elem, {
       width: "100%",
       height: "100%",
-      autoplay: props.playing,
+      autoplay: true,
       ...playerOpts,
     })
 

@@ -112,6 +112,8 @@ export default function App() {
 
         localStorage.removeItem(`captions-${TOKEN}`)
         setEditorDirty(false)
+      } else {
+        throw new Error("Unable to save captions")
       }
     } catch (error) {
       message.error("Unable to save changes. Please try again later.")
@@ -143,7 +145,7 @@ export default function App() {
         setVideoInfo(JSON.parse(localVideoInfoState))
         setLoading(false)
 
-        message.success("Local drafted changes restored")
+        message.success("Local draft restored")
       } else {
         fetchCaptions(window.VIDEO_ID, window.SUBTITLE_LANG)
       }
