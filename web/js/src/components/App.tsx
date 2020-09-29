@@ -1,20 +1,22 @@
 import { h } from "preact"
-import { useState, useEffect } from "preact/hooks"
+import { useState, useEffect, useContext } from "preact/hooks"
 
+import Loader from "./Loader"
 import Header from "./Header"
+
 import Player from "./Player"
 import CaptionList from "./CaptionList"
 
 import type { Caption, CaptionData, VideoInfo } from "../types"
-import { initialCaptionState, timestampify } from "../utils"
+import { initialCaptionState, timestampify, NotyfContext } from "../utils"
 
 let TOKEN = `${window.VIDEO_ID}-${window.SUBTITLE_LANG}`
 
 export default function App() {
+  let message = useContext(NotyfContext)
+
   // Editor State
-  let [error, setError] = useState<string>("")
   let [loading, setLoading] = useState<boolean>(true)
-  let [message, setMessage] = useState<string>("")
   let [isEditorDirty, setEditorDirty] = useState<boolean>(false)
 
   // Video Information State
@@ -72,7 +74,7 @@ export default function App() {
       setLoading(false)
     } catch (error) {
       setLoading(false)
-      setError("Error fetching captions")
+      message.error("Error loading captions. Please try again later.")
 
       return console.error("Error fetching captions:", error)
     }
@@ -107,12 +109,15 @@ export default function App() {
        * the editor as not holding any unsaved changes
        */
       if (saveRequest.ok) {
-        setMessage("Changes successfully saved!")
+        message.success("Changes successfully saved!")
 
         localStorage.removeItem(`captions-${TOKEN}`)
         setEditorDirty(false)
+      } else {
+        throw new Error("Unable to save captions")
       }
     } catch (error) {
+      message.error("Unable to save changes. Please try again later.")
       console.log("Error saving captions", error)
     }
   }
@@ -130,7 +135,7 @@ export default function App() {
 
     if (hasDirtyChanges) {
       let hydrateConfirmation: boolean = confirm(
-        "Would you like to reload your currently drafted edits?"
+        "Would you like to reload your currently drafted changes?"
       )
 
       if (hydrateConfirmation) {
@@ -140,6 +145,8 @@ export default function App() {
         setCaptions(JSON.parse(localCaptionState))
         setVideoInfo(JSON.parse(localVideoInfoState))
         setLoading(false)
+
+        message.success("Local draft restored")
       } else {
         fetchCaptions(window.VIDEO_ID, window.SUBTITLE_LANG)
       }
@@ -158,12 +165,13 @@ export default function App() {
     [isEditorDirty]
   )
 
+  if (loading) {
+    return <Loader />
+  }
+
   return (
     <div class="app">
       <Header videoTitle={videoInfo.videoTitle} saveCaptions={saveCaptions} />
-
-      {error && <div class="message error">{error}</div>}
-      {loading && <div class="message">Loading</div>}
 
       <div class="editor">
         <CaptionList
