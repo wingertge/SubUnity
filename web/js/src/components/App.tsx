@@ -16,7 +16,6 @@ export default function App() {
   let message = useContext(NotyfContext)
 
   // Editor State
-  let [error, setError] = useState<string>("")
   let [loading, setLoading] = useState<boolean>(true)
   let [isEditorDirty, setEditorDirty] = useState<boolean>(false)
 
@@ -75,7 +74,7 @@ export default function App() {
       setLoading(false)
     } catch (error) {
       setLoading(false)
-      setError("Error fetching captions")
+      message.error("Error loading captions. Please try again later.")
 
       return console.error("Error fetching captions:", error)
     }
@@ -173,8 +172,6 @@ export default function App() {
   return (
     <div class="app">
       <Header videoTitle={videoInfo.videoTitle} saveCaptions={saveCaptions} />
-
-      {error && <div class="message error">{error}</div>}
 
       <div class="editor">
         <CaptionList
