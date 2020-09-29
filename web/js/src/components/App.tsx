@@ -1,7 +1,9 @@
 import { h } from "preact"
 import { useState, useEffect, useContext } from "preact/hooks"
 
+import Loader from "./Loader"
 import Header from "./Header"
+
 import Player from "./Player"
 import CaptionList from "./CaptionList"
 
@@ -164,12 +166,15 @@ export default function App() {
     [isEditorDirty]
   )
 
+  if (loading) {
+    return <Loader />
+  }
+
   return (
     <div class="app">
       <Header videoTitle={videoInfo.videoTitle} saveCaptions={saveCaptions} />
 
       {error && <div class="message error">{error}</div>}
-      {loading && <div class="message">Loading</div>}
 
       <div class="editor">
         <CaptionList
