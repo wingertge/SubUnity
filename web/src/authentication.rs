@@ -293,7 +293,7 @@ pub async fn login(
             let redirect_cookie = cookies.get("redirect_to");
             if let Some(cookie) = redirect_cookie {
                 let value = cookie.value().to_string();
-                cookies.remove(cookie.into_owned());
+                cookies.remove(cookie.clone());
                 Ok(Redirect::found(value))
             } else {
                 Ok(Redirect::found(uri!(super::index)))
