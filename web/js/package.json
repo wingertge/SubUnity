@@ -10,7 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "notyf": "^3.9.0",
-    "preact": "^10.4.8",
+    "preact": "^10.5.7",
     "yt-player": "^3.4.3"
   },
   "devDependencies": {
