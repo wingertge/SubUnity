@@ -57,8 +57,7 @@ export default function Player(props: PlayerProps) {
   return (
     <div class="player">
       <YouTubePlayer
-        width="1024px"
-        height="576px"
+        class="player-iframe"
         videoId={videoId}
         activeCaption={activeCaption}
         onPlaying={resetCaptions}

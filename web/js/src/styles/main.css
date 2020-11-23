@@ -3,6 +3,12 @@ body {
   box-sizing: border-box;
 }
 
+embed,
+iframe,
+object {
+  max-width: 100%;
+}
+
 body {
   background: white;
   color: black;
@@ -66,11 +72,4 @@ textarea {
 .editor {
   display: flex;
   justify-content: space-evenly;
-}
-
-@media only screen and (min-width: 1920px) {
-  .editor {
-    width: 80%;
-    margin: 0 auto;
-  }
 }
