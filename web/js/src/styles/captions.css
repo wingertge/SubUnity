@@ -1,11 +1,12 @@
 .captions-list {
-  height: 800px;
-  width: 25%;
-  min-width: 300px;
+  width: 35%;
+  min-width: 350px;
   min-height: 350px;
+  max-height: 700px;
   overflow-x: hidden;
   overflow-y: auto;
-  padding-right: 15px;
+  padding-right: 5px;
+  margin-left: 10px;
 }
 
 /* TODO: Make sure this is cross-browser compatible */
@@ -27,12 +28,13 @@
 .caption {
   display: flex;
   border-bottom: 1px solid #aaa;
-  padding: 10px 5px;
+  padding: 10px 0;
   width: 100%;
 }
 
 .caption:hover {
   background: #f8f8f8;
+  cursor: pointer;
 }
 
 .caption-highlighted {
@@ -42,39 +44,37 @@
 
 .timestamps,
 .caption-textbox {
-  margin-top: 5px;
 }
 
 .timestamps {
-  width: 80px;
+  width: 30%;
 }
 
 .timestamps input {
-  width: 70px;
+  font-family: sans-serif;
+  font-size: 14px;
   color: #888;
+  max-width: 55px;
+  text-align: right;
 }
 
 .caption input,
 .caption-textbox {
   border: none;
-  line-height: 13px;
-  font-size: 14px;
+  line-height: 14px;
   resize: none;
   overflow: hidden;
   box-shadow: none;
 }
 
 .timestamps input {
-  text-align: center;
 }
 
 .caption-textbox {
   color: black;
   font-size: 13px;
-  width: 100%;
+  width: 95%;
   min-height: 47px;
-  margin: 2px 0 8px;
-  padding: 4px;
   line-height: 1.4;
 }
 
@@ -95,7 +95,6 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  margin-left: 5px;
   text-align: center;
   opacity: 0.25;
 }

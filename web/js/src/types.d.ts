@@ -56,4 +56,5 @@ export interface VideoInfo {
   videoTitle?: string
   uploaderId?: string
   uploaderName?: string
+  isVideoLong?: boolean
 }

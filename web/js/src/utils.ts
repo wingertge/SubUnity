@@ -16,9 +16,24 @@ export const initialCaptionState: Caption = {
  * Convert seconds to a human friendly timestamp
  *
  * @param {number} seconds
+ * @param {string} format
  */
-export const timestampify = (seconds: number): string =>
-  new Date(1000 * seconds).toISOString().substring(14, 21)
+export const timestampify = (
+  seconds: number,
+  format: "short" | "long"
+): string => {
+  let workingString = new Date(1000 * seconds).toISOString().substring(11, 21)
+
+  if (format === "short") {
+    if (seconds > 600) {
+      return workingString.substring(3)
+    } else {
+      return workingString.substring(4)
+    }
+  } else {
+    return workingString.substring(1)
+  }
+}
 
 /**
  * Convert a timestamp back to seconds

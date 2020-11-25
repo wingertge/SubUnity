@@ -7,16 +7,18 @@ import type {
   CaptionState,
   EditorState,
   EditableCaptionField,
+  VideoInfo
 } from "../types"
 
 import "../styles/captions.css"
 
-interface CaptionListProps extends CaptionState, EditorState {}
+interface CaptionListProps extends CaptionState, EditorState, Pick<VideoInfo, "isVideoLong"> {}
 
 export default function CaptionList(props: CaptionListProps) {
   let {
     captions,
     setCaptions,
+    isVideoLong,
     activeCaption,
     setActiveCaption,
     isEditorDirty,
@@ -125,7 +127,7 @@ export default function CaptionList(props: CaptionListProps) {
   }
 
   return (
-    <div class="captions-list">
+    <div class={`captions-list ${isVideoLong ? "long" : "short"}`}>
       {props.captions.map(caption => (
         <CaptionItem
           key={caption.id}

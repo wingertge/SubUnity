@@ -56,8 +56,8 @@ export default function App() {
        */
       let fetchedCaptions: Caption[] = entries.map((caption, id) => ({
         id,
-        startTimestamp: timestampify(caption.startSeconds),
-        endTimestamp: timestampify(caption.endSeconds),
+        startTimestamp: timestampify(caption.startSeconds, "short"),
+        endTimestamp: timestampify(caption.endSeconds, "short"),
         manuallySelected: false,
         ...caption,
       }))
@@ -176,6 +176,7 @@ export default function App() {
       <div class="editor">
         <CaptionList
           captions={captions}
+          isLongVideo={false}
           setCaptions={setCaptions}
           activeCaption={activeCaption}
           setActiveCaption={setActiveCaption}
