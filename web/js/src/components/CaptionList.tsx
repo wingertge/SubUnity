@@ -34,7 +34,7 @@ export default function CaptionList(props: CaptionListProps) {
    */
   function addCaption(id: string): void {
     let captionsCopy: Caption[] = [...captions]
-    let captionIndex: number = captions.findIndex(caption => caption.id === id)
+    let captionIndex: number = captionsCopy.findIndex(caption => caption.id === id)
 
     let newCaption: Caption = {
       ...initialCaptionState,
@@ -118,13 +118,15 @@ export default function CaptionList(props: CaptionListProps) {
    *
    * @param {number} id
    */
-  function captionSelected(id: number): void {
-    let selectedCaption: Caption = captions.filter(
-      caption => caption.id == id
-    )[0]
-    selectedCaption.manuallySelected = true
+  function captionSelected(id: string): void {
+    if (id !== activeCaption.id) {
+      let selectedCaption: Caption = captions.filter(
+        caption => caption.id == id
+      )[0]
+      selectedCaption.manuallySelected = true
 
-    setActiveCaption(selectedCaption)
+      setActiveCaption(selectedCaption)
+    }
   }
 
   return (
