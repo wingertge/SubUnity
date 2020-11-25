@@ -16,7 +16,7 @@ export interface BaseCaption {
 }
 
 export interface Caption extends BaseCaption {
-  id: number
+  id: string
   startTimestamp: string
   endTimestamp: string
   manuallySelected: boolean
@@ -40,14 +40,14 @@ export interface EditorState {
 }
 
 export interface CaptionItemCallbacks {
-  addCaption(id: number): void
-  captionSelected(id: number): void
+  addCaption(id: string): void
+  captionSelected(id: string): void
   updateCaptionField(
-    id: number,
+    id: string,
     field: EditableCaptionField,
     content: string
   ): void
-  deleteCaption(id: number): void
+  deleteCaption(id: string): void
 }
 
 export interface VideoInfo {

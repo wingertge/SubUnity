@@ -1,6 +1,7 @@
 import { h } from "preact"
-import CaptionItem from "./Caption"
+import { nanoid } from "nanoid"
 
+import CaptionItem from "./Caption"
 import { initialCaptionState, secondify } from "../utils"
 import type {
   Caption,
@@ -31,13 +32,13 @@ export default function CaptionList(props: CaptionListProps) {
    *
    * @param {number} id
    */
-  function addCaption(id: number): void {
+  function addCaption(id: string): void {
     let captionsCopy: Caption[] = [...captions]
     let captionIndex: number = captions.findIndex(caption => caption.id === id)
 
     let newCaption: Caption = {
       ...initialCaptionState,
-      id: Date.now(),
+      id: nanoid()
     }
 
     captionsCopy.splice(captionIndex + 1, 0, newCaption)
@@ -52,7 +53,7 @@ export default function CaptionList(props: CaptionListProps) {
    * @param {string} content
    */
   function updateCaptionField(
-    id: number,
+    id: string,
     field: EditableCaptionField,
     content: string
   ): void {
@@ -96,7 +97,7 @@ export default function CaptionList(props: CaptionListProps) {
    *
    * @param {number} id
    */
-  function deleteCaption(id: number): void {
+  function deleteCaption(id: string): void {
     let confirmation = confirm("Are you sure that you want to delete this?")
 
     if (confirmation) {

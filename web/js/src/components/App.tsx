@@ -1,6 +1,8 @@
 import { h } from "preact"
 import { useState, useEffect, useContext } from "preact/hooks"
 
+import { nanoid } from "nanoid"
+
 import Loader from "./Loader"
 import Header from "./Header"
 
@@ -54,8 +56,8 @@ export default function App() {
       /**
        * Transform the caption entries and add display related metadata
        */
-      let fetchedCaptions: Caption[] = entries.map((caption, id) => ({
-        id,
+      let fetchedCaptions: Caption[] = entries.map(caption => ({
+        id: nanoid(),
         startTimestamp: timestampify(caption.startSeconds, "short"),
         endTimestamp: timestampify(caption.endSeconds, "short"),
         manuallySelected: false,

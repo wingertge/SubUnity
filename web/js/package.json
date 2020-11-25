@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "nanoid": "^3.1.18",
     "notyf": "^3.9.0",
     "preact": "^10.5.7",
     "yt-player": "^3.4.3"
