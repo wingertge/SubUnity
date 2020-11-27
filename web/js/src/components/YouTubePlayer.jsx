@@ -58,7 +58,7 @@ export default class YouTubePlayer extends Component {
    * Invoke player methods based on incoming props
    */
   componentDidUpdate(prevProps) {
-    const { videoId, activeCaption, playing, volume, playbackRate } = this.props
+    const { videoId, playing, volume, playbackRate } = this.props
 
     if (videoId && prevProps.videoId !== videoId) {
       if (!this.player) this._createPlayer(this.props)
@@ -86,12 +86,6 @@ export default class YouTubePlayer extends Component {
 
     if (prevProps.videoId && !videoId) {
       this._destroyPlayer()
-    }
-
-    // Automatically seek player to a manually selected caption
-    if (activeCaption.manuallySelected) {
-      this.player.seek(activeCaption.startSeconds)
-      this.player.pause()
     }
   }
 

@@ -19,7 +19,6 @@ export interface Caption extends BaseCaption {
   id: string
   startTimestamp: string
   endTimestamp: string
-  manuallySelected: boolean
 }
 
 export interface CaptionData extends VideoInfo {

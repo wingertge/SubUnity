@@ -1,5 +1,5 @@
 import { h } from "preact"
-import { useState, useEffect, useContext } from "preact/hooks"
+import { useState, useEffect, useRef, useContext } from "preact/hooks"
 
 import { nanoid } from "nanoid"
 
@@ -15,6 +15,7 @@ import { initialCaptionState, timestampify, NotyfContext } from "../utils"
 let TOKEN = `${window.VIDEO_ID}-${window.SUBTITLE_LANG}`
 
 export default function App() {
+  let playerRef = useRef<HTMLDivElement | null>(null)
   let message = useContext(NotyfContext)
 
   // Editor State
@@ -178,21 +179,23 @@ export default function App() {
       <div class="editor">
         <CaptionList
           captions={captions}
-          isLongVideo={false}
           setCaptions={setCaptions}
           activeCaption={activeCaption}
           setActiveCaption={setActiveCaption}
+          playerRef={playerRef}
+          isLongVideo={false}
           isEditorDirty={isEditorDirty}
           setEditorDirty={setEditorDirty}
           syncCaptionStorage={syncCaptionStorage}
         />
 
         <Player
-          videoId={videoInfo.videoId}
           captions={captions}
           setCaptions={setCaptions}
           activeCaption={activeCaption}
           setActiveCaption={setActiveCaption}
+          playerRef={playerRef}
+          videoId={videoInfo.videoId}
         />
       </div>
     </div>

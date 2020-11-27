@@ -1,15 +1,16 @@
 import { createContext, Context } from "preact"
+import { nanoid } from "nanoid"
 import { Notyf } from "notyf"
+
 import type { Caption } from "./types"
 
 export const initialCaptionState: Caption = {
-  id: -1,
+  id: nanoid(),
   startTimestamp: "00:00.0",
   endTimestamp: "00:00.0",
   startSeconds: 0,
   endSeconds: 0,
-  text: "",
-  manuallySelected: false,
+  text: ""
 }
 
 /**

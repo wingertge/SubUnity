@@ -3,20 +3,28 @@ import { nanoid } from "nanoid"
 
 import CaptionItem from "./Caption"
 import { initialCaptionState, secondify } from "../utils"
+
+import type { Ref } from "preact/hooks"
 import type {
   Caption,
   CaptionState,
   EditorState,
   EditableCaptionField,
-  VideoInfo
+  VideoInfo,
 } from "../types"
 
 import "../styles/captions.css"
 
-interface CaptionListProps extends CaptionState, EditorState, Pick<VideoInfo, "isVideoLong"> {}
+interface CaptionListProps
+  extends CaptionState,
+    EditorState,
+    Pick<VideoInfo, "isVideoLong"> {
+  playerRef: Ref<HTMLDivElement>
+}
 
 export default function CaptionList(props: CaptionListProps) {
   let {
+    playerRef,
     captions,
     setCaptions,
     isVideoLong,
@@ -34,11 +42,11 @@ export default function CaptionList(props: CaptionListProps) {
    */
   function addCaption(id: string): void {
     let captionsCopy: Caption[] = [...captions]
-    let captionIndex: number = captionsCopy.findIndex(caption => caption.id === id)
+    let captionIndex: number = captionsCopy.findIndex(c => c.id === id)
 
     let newCaption: Caption = {
       ...initialCaptionState,
-      id: nanoid()
+      id: nanoid(),
     }
 
     captionsCopy.splice(captionIndex + 1, 0, newCaption)
@@ -105,27 +113,29 @@ export default function CaptionList(props: CaptionListProps) {
         setActiveCaption(initialCaptionState)
       }
 
-      let deletedCaptions: Caption[] = captions.filter(
-        caption => caption.id !== id
-      )
+      let deletedCaptions: Caption[] = captions.filter(c => c.id !== id)
       setCaptions(deletedCaptions)
     }
   }
 
   /**
-   * Find the caption by specific ID and mark it as being
-   * selected by a user instead of being selected from playback
+   * Find the caption by specific ID and seek the player
+   * to the caption's start time
    *
-   * @param {number} id
+   * @param {string} id
    */
   function captionSelected(id: string): void {
-    if (id !== activeCaption.id) {
-      let selectedCaption: Caption = captions.filter(
-        caption => caption.id == id
-      )[0]
-      selectedCaption.manuallySelected = true
+    if (activeCaption.id !== id) {
+      let selectedCaption: Caption[] = captions.filter(c => c.id == id)
 
-      setActiveCaption(selectedCaption)
+      if (playerRef.current) {
+        let player = playerRef.current.player
+
+        player.seek(selectedCaption[0].startSeconds)
+        player.pause()
+      }
+
+      setActiveCaption(selectedCaption[0])
     }
   }
 
