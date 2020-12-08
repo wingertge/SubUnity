@@ -6,4 +6,8 @@ import App from "./components/App"
 import "notyf/notyf.min.css"
 import "./styles/main.css"
 
-render(<App />, document.body)
+const root = document.getElementById("root")
+
+if (root) {
+  render(<App />, root)
+}

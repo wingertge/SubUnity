@@ -1,4 +1,5 @@
 import { h } from "preact"
+import { useState } from "preact/hooks"
 
 // @ts-ignore
 import YouTubePlayer from "./YouTubePlayer"
@@ -39,7 +40,7 @@ export default function Player(props: PlayerProps) {
 
     // Only update the active caption if there are any
     // matching captions, otherwise this will throw an error.
-    if (currentCaption) {
+    if (currentCaption.length > 0) {
       setActiveCaption(currentCaption[0])
     }
   }
@@ -50,7 +51,6 @@ export default function Player(props: PlayerProps) {
         class="player-iframe"
         ref={playerRef}
         videoId={videoId}
-        playing={true}
         onTimeUpdate={(currentTime: number) => updateActiveCaption(currentTime)}
       />
 

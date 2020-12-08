@@ -45,7 +45,6 @@ export default class YouTubePlayer extends Component {
 
     return (
       props.videoId !== nextProps.videoId ||
-      props.activeCaption !== nextProps.activeCaption ||
       props.width !== nextProps.width ||
       props.height !== nextProps.height ||
       props.playing !== nextProps.playing ||

@@ -61,7 +61,6 @@ export default function App() {
         id: nanoid(),
         startTimestamp: timestampify(caption.startSeconds, "short"),
         endTimestamp: timestampify(caption.endSeconds, "short"),
-        manuallySelected: false,
         ...caption,
       }))
 
