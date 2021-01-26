@@ -63,8 +63,7 @@ export const secondify = (timestamp: string): number => {
     leadingZero = "0:"
   }
 
-  let seconds: number = new Date("1970-01-01T0" + leadingZero + timestamp + "Z").getTime() / 1000
-  return seconds
+  return new Date("1970-01-01T0" + leadingZero + timestamp + "Z").getTime() / 1000
 }
 
 export const NotyfContext: Context<Notyf> = createContext(
