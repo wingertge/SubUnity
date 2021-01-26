@@ -14,7 +14,20 @@ export const initialCaptionState: Caption = {
 }
 
 /**
- * Convert seconds to a human friendly timestamp
+ * Convert seconds to a human friendly timestamp.
+ *
+ * Timestamps will be formatted to either show the hour portion or omit it.
+ * If a video is less than ten minutes long the leading zero will also
+ * not be shown.
+ *
+ * These timestamps are modeled after YouTube and are not standard
+ * SMPTE timecodes. They show hours, minutes, seconds, and then
+ * milliseconds separated by a decimal.
+ *
+ * Example of timestamps that will be created:
+ *  Long video: H:MM:SS.MS
+ *  Short video (>10 mins): MM:SS.MS
+ *  Short video (<10 mins): M:SS.MS
  *
  * @param {number} seconds
  * @param {string} format
@@ -26,6 +39,7 @@ export const timestampify = (
   let workingString = new Date(1000 * seconds).toISOString().substring(11, 21)
 
   if (format === "short") {
+    // Drop another leading zero because this video is under 10 minutes
     if (seconds > 600) {
       return workingString.substring(3)
     } else {
@@ -40,8 +54,18 @@ export const timestampify = (
  * Convert a timestamp back to seconds
  * @param {string} timestamp
  */
-export const secondify = (timestamp: string): number =>
-  new Date("1970-01-01T00:" + timestamp + "Z").getTime() / 1000
+export const secondify = (timestamp: string): number => {
+  let leadingZero: string = ""
+
+  if (timestamp.length === 6) {
+    leadingZero = "0:0"
+  } else if (timestamp.length === 7) {
+    leadingZero = "0:"
+  }
+
+  let seconds: number = new Date("1970-01-01T0" + leadingZero + timestamp + "Z").getTime() / 1000
+  return seconds
+}
 
 export const NotyfContext: Context<Notyf> = createContext(
   new Notyf({
